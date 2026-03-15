@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      Formula &amp; Structure Resolver
+    </title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet" />
+    <style>
+      *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--cyan:#00f2ff;--green:#00ff88;--purple:#a855f7;--amber:#f59e0b;--red:#f87171;--bg:#0a1120;--card:rgba(15,23,42,.95);--border:rgba(255,255,255,.12)}
+body{background:var(--bg);color:#e2e8f0;font-family:&#39;Inter&#39;,system-ui,sans-serif;min-height:100vh}
+.orbitron{font-family:&#39;Orbitron&#39;,sans-serif}
+
+/* Grid bg */
+.grid-bg{position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 80% 50% at 20% 20%,rgba(0,242,255,.06) 0%,transparent 60%),
+             radial-gradient(ellipse 60% 40% at 80% 80%,rgba(168,85,247,.07) 0%,transparent 60%)}
+.grid-bg::after{content:&#39;&#39;;position:absolute;inset:0;
+  background-image:linear-gradient(rgba(0,242,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,242,255,.025) 1px,transparent 1px);
+  background-size:50px 50px}
+
+/* Layout */
+.wrap{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:0 16px 80px}
+
+/* Hero */
+.hero{text-align:center;padding:60px 0 36px}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(0,242,255,.08);border:1px solid rgba(0,242,255,.25);border-radius:50px;padding:6px 18px;color:var(--cyan);font-size:.72rem;font-family:&#39;Orbitron&#39;,sans-serif;letter-spacing:.1em;text-transform:uppercase;margin-bottom:18px}
+.hero-title{font-family:&#39;Orbitron&#39;,sans-serif;font-size:clamp(2rem,6vw,3.5rem);font-weight:900;line-height:1.1;margin-bottom:14px;background:linear-gradient(90deg,var(--cyan),var(--purple),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{color:#94a3b8;max-width:560px;margin:0 auto 20px;line-height:1.6}
+.hero-stats{display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
+.stat-chip{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:8px 16px;font-size:.82rem}
+.stat-chip b{color:var(--cyan);font-family:&#39;Orbitron&#39;,sans-serif;margin-right:4px}
+
+/* Card */
+.card{background:var(--card);backdrop-filter:blur(16px);border:1px solid var(--border);border-radius:20px;padding:24px;margin-bottom:20px;box-shadow:0 8px 40px rgba(0,0,0,.4)}
+.card-head{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.card-icon{width:42px;height:42px;background:linear-gradient(135deg,rgba(0,242,255,.15),rgba(168,85,247,.15));border:1px solid rgba(0,242,255,.3);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0}
+.card-title{font-family:&#39;Orbitron&#39;,sans-serif;font-size:1.05rem;font-weight:700;color:var(--cyan)}
+.card-sub{font-size:.75rem;color:#64748b;margin-top:2px}
+
+/* Input area */
+.input-row{display:flex;gap:10px;margin-bottom:10px}
+#main-input{flex:1;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.15);border-radius:14px;padding:14px 18px;font-family:monospace;font-size:.9rem;color:#e2e8f0;outline:none;transition:all .2s}
+#main-input:focus{border-color:var(--cyan);box-shadow:0 0 20px rgba(0,242,255,.15)}
+#main-input::placeholder{color:#334155}
+#resolve-btn{padding:12px 24px;background:linear-gradient(135deg,rgba(0,255,136,.15),rgba(0,242,255,.1));border:1px solid var(--green);border-radius:14px;color:var(--green);font-family:&#39;Orbitron&#39;,sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s}
+#resolve-btn:hover{box-shadow:0 0 24px rgba(0,255,136,.3);transform:translateY(-1px)}
+
+.hints{display:flex;flex-wrap:wrap;gap:12px;font-size:.75rem;color:#475569;margin-bottom:14px}
+.hints code{color:var(--cyan);background:rgba(0,242,255,.07);padding:2px 6px;border-radius:5px;font-size:.73rem}
+
+/* Example chips */
+.examples{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.ex-chip{background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:6px 12px;font-size:.74rem;font-family:monospace;color:#94a3b8;cursor:pointer;transition:all .2s}
+.ex-chip:hover{border-color:rgba(0,242,255,.4);color:var(--cyan)}
+
+/* Idle state */
+.idle{text-align:center;padding:40px 16px;color:#334155}
+.idle-icon{font-size:3rem;margin-bottom:12px;opacity:.25}
+.idle-title{color:#475569;font-size:.85rem;font-weight:600;margin-bottom:6px}
+.idle-sub{font-size:.75rem}
+
+/* Error state */
+.error-box{background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.25);border-radius:14px;padding:18px;text-align:center;color:var(--red)}
+.error-box .err-icon{font-size:1.4rem;margin-bottom:8px}
+
+/* Result */
+.result{animation:fadeIn .35s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.res-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+.res-name{font-family:&#39;Orbitron&#39;,sans-serif;font-size:1.3rem;font-weight:700;color:var(--green);margin-bottom:4px}
+.res-iupac{color:var(--cyan);font-size:.88rem;font-family:monospace;margin-bottom:4px}
+.res-class{font-size:.75rem;color:#64748b}
+
+.conf-badge{padding:5px 14px;border-radius:50px;font-size:.7rem;font-family:&#39;Orbitron&#39;,sans-serif;font-weight:700;white-space:nowrap}
+.conf-high{background:rgba(0,255,136,.15);color:var(--green);border:1px solid rgba(0,255,136,.4)}
+.conf-med{background:rgba(245,158,11,.15);color:var(--amber);border:1px solid rgba(245,158,11,.4)}
+.conf-low{background:rgba(248,113,113,.15);color:var(--red);border:1px solid rgba(248,113,113,.4)}
+
+.info-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
+.info-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+@media(max-width:600px){.info-grid-4{grid-template-columns:repeat(2,1fr)}}
+
+.info-box{background:rgba(0,0,0,.35);border:1px solid rgba(0,242,255,.15);border-radius:14px;padding:12px 14px}
+.info-lbl{font-size:.65rem;color:#475569;text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px}
+.info-val{font-weight:700;font-family:monospace;color:#e2e8f0;word-break:break-all;line-height:1.3;font-size:.9rem}
+.info-val.sm{font-size:.78rem}
+.info-val.accent{color:var(--cyan)}
+
+.pills{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.atom-pill{background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:5px 12px;font-size:.8rem}
+.atom-pill b{color:var(--cyan)}
+.fg-pill{background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.3);border-radius:50px;padding:5px 12px;font-size:.72rem;color:#c4b5fd}
+
+/* Isomer panel */
+.iso-panel{margin-bottom:18px;padding:16px;background:rgba(245,158,11,.04);border:1px solid rgba(245,158,11,.22);border-radius:14px}
+.iso-header{font-size:.77rem;font-weight:700;color:var(--amber);margin-bottom:12px}
+.iso-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:8px}
+.iso-card{background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:10px 12px;cursor:pointer;transition:all .2s;text-align:left}
+.iso-card:hover{border-color:rgba(0,242,255,.35)}
+.iso-card.active{background:rgba(0,255,136,.08);border-color:rgba(0,255,136,.4)}
+.iso-card-name{font-size:.8rem;font-weight:700;color:#e2e8f0;margin-bottom:2px}
+.iso-card.active .iso-card-name{color:var(--green)}
+.iso-card-iupac{font-size:.7rem;color:#64748b;font-family:monospace}
+.iso-card-struct{font-size:.67rem;color:#475569;font-family:monospace;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.iso-card-class{display:inline-block;margin-top:5px;font-size:.62rem;font-weight:600;background:#1e293b;color:var(--cyan);padding:2px 8px;border-radius:50px}
+
+/* Accordion */
+.acc{margin-bottom:6px}
+.acc-btn{width:100%;display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-radius:12px;border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.3);color:#94a3b8;font-size:.8rem;font-family:monospace;cursor:pointer;text-align:left;transition:all .2s}
+.acc-btn:hover{border-color:rgba(0,242,255,.25);color:#e2e8f0}
+.acc-btn.open{background:rgba(0,242,255,.07);border-color:rgba(0,242,255,.35);color:var(--cyan);border-radius:12px 12px 0 0}
+.acc-arrow{font-size:.65rem;transition:transform .2s}
+.acc-btn.open .acc-arrow{transform:rotate(180deg)}
+.acc-body{background:rgba(0,0,0,.22);border:1px solid rgba(0,242,255,.12);border-top:none;border-radius:0 0 12px 12px;padding:12px 16px;display:none}
+.acc-body.open{display:block}
+
+.data-row{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.78rem}
+.data-row:last-child{border-bottom:none}
+.data-lbl{color:#475569;flex-shrink:0}
+.data-val{color:var(--cyan);font-family:monospace;text-align:right;word-break:break-all}
+
+/* Reactions */
+.rxn-item{font-size:.75rem;color:#94a3b8;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.rxn-item:last-child{border-bottom:none}
+
+/* Try another btn */
+.try-btn{width:100%;margin-top:16px;padding:14px;background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.28);border-radius:14px;color:var(--green);font-family:&#39;Orbitron&#39;,sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;transition:all .2s}
+.try-btn:hover{background:rgba(0,255,136,.12);box-shadow:0 0 20px rgba(0,255,136,.2)}
+
+/* Reference grid */
+.ref-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.ref-card{background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:12px 14px;transition:all .2s}
+.ref-card:hover{border-color:rgba(0,242,255,.25)}
+.ref-cls{font-weight:700;color:var(--cyan);font-size:.83rem;margin-bottom:4px}
+.ref-rule{font-size:.73rem;color:#475569;font-family:monospace;margin-bottom:3px}
+.ref-ex{font-size:.73rem;color:#94a3b8}
+
+/* divider */
+hr{border:none;border-top:1px solid rgba(255,255,255,.07);margin:18px 0}
+    </style>
+  </head>
+  <body>
+    <div class="grid-bg">
+    </div>
+    <div class="wrap">
+      <!-- Hero -->
+      <section class="hero">
+        <div class="hero-badge">
+          ⬡ Formula &amp; Structure Resolver
+        </div>
+        <h1 class="hero-title orbitron">
+          Formula Resolver
+        </h1>
+        <p class="hero-sub">
+          Enter any molecular formula, structural formula, or compound name. Get the correct compound name, IUPAC name, all positional isomers, DBE, functional groups, and known reactions.
+        </p>
+        <div class="hero-stats">
+          <div class="stat-chip">
+            <b>            3-in-1
+</b>
+            Input formats
+          </div>
+          <div class="stat-chip">
+            <b>            DBE
+</b>
+            Calculator
+          </div>
+          <div class="stat-chip">
+            <b>            All Isomers
+</b>
+            Listed
+          </div>
+          <div class="stat-chip">
+            <b>            Reactions
+</b>
+            Database
+          </div>
+        </div>
+      </section>
+      <!-- Resolver card -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-icon">
+            ⬡
+          </div>
+          <div>
+            <div class="card-title">
+              Live Resolver
+            </div>
+            <div class="card-sub">
+              Enter compound name, molecular formula, or structural formula
+            </div>
+          </div>
+        </div>
+        <div class="input-row">
+          <input id="main-input" type="text" placeholder="CH3-CO-CH3  ·  C9H8O  ·  cinnamaldehyde  ·  pent-2-en-1-ol" autocomplete="off" spellcheck="false" />
+          <button id="resolve-btn" onclick="doResolve()">
+            ⬡ RESOLVE
+          </button>
+        </div>
+        <div class="hints">
+          <span>          Mol formula:
+          <code>          C9H8O
+</code>
+</span>
+          <span>          Structural:
+          <code>          CH3-CO-CH3
+</code>
+</span>
+          <span>          Name:
+          <code>          cinnamaldehyde
+</code>
+</span>
+          <span>          Alkenol:
+          <code>          CH3-CH2-CH=CH-CH2-OH
+</code>
+</span>
+        </div>
+        <div class="examples" id="examples-row">
+        </div>
+        <div id="rfr-idle" class="idle">
+          <div class="idle-icon">
+            ⬡
+          </div>
+          <div class="idle-title">
+            Formula Parser · DBE Calculator · Aromaticity Detector
+          </div>
+          <div class="idle-sub">
+            Functional Group Predictor · Isomer Selector · Candidate Generator · Reaction Lookup
+          </div>
+        </div>
+        <div id="rfr-out" style="display:none">
+        </div>
+      </div>
+      <!-- Functional classes reference -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-icon">
+            🧪
+          </div>
+          <div>
+            <div class="card-title">
+              Functional Class Rules
+            </div>
+            <div class="card-sub">
+              Separate logic for each compound class
+            </div>
+          </div>
+        </div>
+        <div class="ref-grid" id="ref-grid">
+        </div>
+      </div>
+      <!-- How to use -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-icon">
+            📋
+          </div>
+          <div>
+            <div class="card-title">
+              How to Use
+            </div>
+            <div class="card-sub">
+              All input formats explained
+            </div>
+          </div>
+        </div>
+        <div id="howto">
+        </div>
+      </div>
+    </div>
+    <script>
+      /* ============================================================
+   CHEMISTRY ENGINE v11 — Full Self-Contained
+   All logic inlined for standalone HTML distribution.
+   Fixed bugs:
+   - CH3-CO-CH3 → Acetone (ketone), not aldehyde
+   - CH3-CH2-CH=CH-CH2-OH → pent-2-en-1-ol (alkenol)
+   - Isomers shown first for user to select
+   - Removed &#34;Recognised As&#34; and &#34;Skeleton&#34; boxes
+   - Separate rules per functional class
+============================================================ */
+
+/* ── ATOMIC WEIGHTS ────────────────────────────────────── */
+var MW_TABLE = {C:12.011,H:1.008,O:15.999,N:14.007,S:32.06,F:18.998,Cl:35.45,Br:79.904,I:126.904,P:30.974};
+
+/* ── PREFIXES ───────────────────────────────────────────── */
+var PREFIXES = [&#39;&#39;,&#39;meth&#39;,&#39;eth&#39;,&#39;prop&#39;,&#39;but&#39;,&#39;pent&#39;,&#39;hex&#39;,&#39;hept&#39;,&#39;oct&#39;,&#39;non&#39;,&#39;dec&#39;,
+  &#39;undec&#39;,&#39;dodec&#39;,&#39;tridec&#39;,&#39;tetradec&#39;,&#39;pentadec&#39;,&#39;hexadec&#39;,&#39;heptadec&#39;,&#39;octadec&#39;,&#39;nonadec&#39;,&#39;icos&#39;];
+function pref(n){return PREFIXES[n]||String(n);}
+function cap(n){var p=pref(n);return p?(p[0].toUpperCase()+p.slice(1)):&#39;&#39;;}
+function safeHtml(s){return String(s||&#39;&#39;).replace(/&amp;/g,&#39;&amp;amp;&#39;).replace(/&lt;/g,&#39;&amp;lt;&#39;).replace(/&gt;/g,&#39;&amp;gt;&#39;).replace(/&#34;/g,&#39;&amp;quot;&#39;);}
+
+/* ── ATOM PARSER ───────────────────────────────────────── */
+function parseAtoms(raw){
+  if(!raw)return{};
+  var s=raw.replace(/[₀₁₂₃₄₅₆₇₈₉]/g,function(c){return&#39;0123456789&#39;.charAt(&#39;₀₁₂₃₄₅₆₇₈₉&#39;.indexOf(c));});
+  s=s.replace(/\s/g,&#39;&#39;);
+  for(var i=0;i&lt;8;i++){
+    s=s.replace(/\(([^()]+)\)(\d+)/g,function(_,g,n){return g.repeat(parseInt(n));});
+    s=s.replace(/\(([^()]+)\)/g,&#39;$1&#39;);
+    if(s.indexOf(&#39;(&#39;)&lt;0)break;
+  }
+  s=s.replace(/[-=≡#→]/g,&#39;&#39;);
+  var a={},re=/([A-Z][a-z]?)(\d*)/g,m;
+  while((m=re.exec(s))!==null){if(m[1])a[m[1]]=(a[m[1]]||0)+(parseInt(m[2])||1);}
+  return a;
+}
+
+/* ── HILL FORMULA ──────────────────────────────────────── */
+function hillFormula(a){
+  var parts=[];
+  if(a.C)parts.push(a.C&gt;1?&#39;C&#39;+a.C:&#39;C&#39;);
+  if(a.H)parts.push(a.H&gt;1?&#39;H&#39;+a.H:&#39;H&#39;);
+  Object.keys(a).filter(function(e){return e!==&#39;C&#39;&amp;&amp;e!==&#39;H&#39;;}).sort().forEach(function(e){
+    var v=a[e];if(v)parts.push(v&gt;1?e+v:e);
+  });
+  return parts.join(&#39;&#39;);
+}
+
+/* ── MW ────────────────────────────────────────────────── */
+function calcMW(a){var mw=0;for(var el in a)mw+=(MW_TABLE[el]||20)*a[el];return Math.round(mw*100)/100;}
+
+/* ── DBE ────────────────────────────────────────────────── */
+function calcDBE(a){
+  var C=a.C||0,H=a.H||0,N=a.N||0;
+  var X=(a.F||0)+(a.Cl||0)+(a.Br||0)+(a.I||0);
+  var dbe=Math.max(0,((2*C+2+N-H-X)/2));
+  return{dbe:dbe,show:&#39;(2×&#39;+C+&#39;+2+&#39;+N+&#39;−&#39;+H+&#39;−&#39;+X+&#39;)÷2 = &#39;+dbe};
+}
+
+/* ── AROMATICITY ───────────────────────────────────────── */
+function detectAromaticity(dbe,a){
+  var C=a.C||0,aromatic=false,details=[];
+  var hetero=(a.N||0)+(a.O||0)+(a.S||0);
+  if(dbe&gt;=4&amp;&amp;C&gt;=6){aromatic=true;details.push(&#39;Benzene ring (DBE≥4, C≥6)&#39;);}
+  if(dbe&gt;=7&amp;&amp;C&gt;=10)details.push(&#39;Fused bicyclic aromatic (naphthalene-type)&#39;);
+  if(dbe&gt;=10&amp;&amp;C&gt;=14)details.push(&#39;Polycyclic aromatic hydrocarbon&#39;);
+  if(dbe&gt;=3&amp;&amp;C&gt;=4&amp;&amp;hetero&gt;0&amp;&amp;!aromatic)details.push(&#39;Aromatic heterocycle possible&#39;);
+  if(dbe===0)details.push(&#39;Saturated — no rings or π bonds&#39;);
+  else if(dbe===1&amp;&amp;!aromatic)details.push(&#39;One ring or one double bond (C=C or C=O)&#39;);
+  else if(dbe===2&amp;&amp;!aromatic)details.push(&#39;Two degrees: diene, alkyne, or ring+double bond&#39;);
+  else if(dbe===3&amp;&amp;!aromatic)details.push(&#39;Three degrees: triene, alkyne+ring, or bicyclic&#39;);
+  return{aromatic:aromatic,details:details};
+}
+
+/* ── STRUCTURAL FORMULA CLASSIFIER ────────────────────── */
+/* KEY FIX: detects ketone vs aldehyde from structural formula */
+function classifyStructural(s){
+  if(!s||!/[-=≡#]/.test(s))return null;
+  var norm=s.trim().replace(/\s/g,&#39;&#39;);
+
+  // KETONE: -CO- flanked by carbons on both sides
+  var isKetone=/[CH0-9]\-CO\-[CH0-9]/.test(norm)||/\-C\(=O\)\-/.test(norm)||/CH3\-CO\-CH/.test(norm)||/CH\-CO\-CH/.test(norm);
+  // Also catch: any CO not at terminal position
+  if(!isKetone&amp;&amp;norm.indexOf(&#39;CO&#39;)&gt;=0){
+    var coIdx=norm.indexOf(&#39;CO&#39;);
+    var before=norm.slice(0,coIdx);var after=norm.slice(coIdx+2);
+    if(before.length&gt;0&amp;&amp;after.length&gt;0&amp;&amp;after[0]!==&#39;O&#39;&amp;&amp;after[0]!==&#39;H&#39;){
+      // CO in middle not followed by O or H = probably ketone
+      isKetone=/C$/.test(before)||/[0-9]$/.test(before);
+    }
+  }
+
+  // ALDEHYDE: CHO at end, or H-CO
+  var isAldehyde=/\-CHO$/.test(norm)||/CHO$/.test(norm)||/^H\-?CHO$/.test(norm)||/\-CH=O$/.test(norm);
+
+  // UNSATURATED ALCOHOL: has -OH AND C=C (not C=O)
+  var hasOH=/\-OH$|OH$|-OH-/.test(norm)||norm.endsWith(&#39;OH&#39;);
+  var hasCCdbl=/[CH]=[CH]/.test(norm)||/CH=CH/.test(norm)||/CH2=CH/.test(norm)||/=CH/.test(norm);
+
+  return{isKetone:isKetone&amp;&amp;!isAldehyde,isAldehyde:isAldehyde&amp;&amp;!isKetone,
+         isAlkenol:hasOH&amp;&amp;hasCCdbl&amp;&amp;!isKetone&amp;&amp;!isAldehyde,hasOH:hasOH,hasCCdbl:hasCCdbl};
+}
+
+/* ── COMPOUND DATABASE ─────────────────────────────────── */
+var COMPOUND_DB = {
+  /* Alkanes */
+  &#34;CH4&#34;:[{name:&#34;Methane&#34;,iupac:&#34;methane&#34;,struct:&#34;CH₄&#34;,hill:&#34;CH4&#34;,cls:&#34;Alkane&#34;}],
+  &#34;C2H6&#34;:[{name:&#34;Ethane&#34;,iupac:&#34;ethane&#34;,struct:&#34;CH₃-CH₃&#34;,hill:&#34;C2H6&#34;,cls:&#34;Alkane&#34;}],
+  &#34;C3H8&#34;:[{name:&#34;Propane&#34;,iupac:&#34;propane&#34;,struct:&#34;CH₃-CH₂-CH₃&#34;,hill:&#34;C3H8&#34;,cls:&#34;Alkane&#34;}],
+  &#34;C4H10&#34;:[
+    {name:&#34;n-Butane&#34;,iupac:&#34;butane&#34;,struct:&#34;CH₃-CH₂-CH₂-CH₃&#34;,hill:&#34;C4H10&#34;,cls:&#34;Alkane&#34;},
+    {name:&#34;Isobutane&#34;,iupac:&#34;2-methylpropane&#34;,struct:&#34;CH₃-CH(CH₃)-CH₃&#34;,hill:&#34;C4H10&#34;,cls:&#34;Alkane&#34;}
+  ],
+  &#34;C5H12&#34;:[
+    {name:&#34;n-Pentane&#34;,iupac:&#34;pentane&#34;,struct:&#34;CH₃-CH₂-CH₂-CH₂-CH₃&#34;,hill:&#34;C5H12&#34;,cls:&#34;Alkane&#34;},
+    {name:&#34;Isopentane&#34;,iupac:&#34;2-methylbutane&#34;,struct:&#34;CH₃-CH(CH₃)-CH₂-CH₃&#34;,hill:&#34;C5H12&#34;,cls:&#34;Alkane&#34;},
+    {name:&#34;Neopentane&#34;,iupac:&#34;2,2-dimethylpropane&#34;,struct:&#34;C(CH₃)₄&#34;,hill:&#34;C5H12&#34;,cls:&#34;Alkane&#34;}
+  ],
+  &#34;C6H14&#34;:[
+    {name:&#34;n-Hexane&#34;,iupac:&#34;hexane&#34;,struct:&#34;CH₃-(CH₂)₄-CH₃&#34;,hill:&#34;C6H14&#34;,cls:&#34;Alkane&#34;},
+    {name:&#34;2-Methylpentane&#34;,iupac:&#34;2-methylpentane&#34;,struct:&#34;CH₃-CH(CH₃)-CH₂-CH₂-CH₃&#34;,hill:&#34;C6H14&#34;,cls:&#34;Alkane&#34;},
+    {name:&#34;3-Methylpentane&#34;,iupac:&#34;3-methylpentane&#34;,struct:&#34;CH₃-CH₂-CH(CH₃)-CH₂-CH₃&#34;,hill:&#34;C6H14&#34;,cls:&#34;Alkane&#34;},
+    {name:&#34;2,2-Dimethylbutane&#34;,iupac:&#34;2,2-dimethylbutane&#34;,struct:&#34;CH₃-C(CH₃)₂-CH₂-CH₃&#34;,hill:&#34;C6H14&#34;,cls:&#34;Alkane&#34;},
+    {name:&#34;2,3-Dimethylbutane&#34;,iupac:&#34;2,3-dimethylbutane&#34;,struct:&#34;CH₃-CH(CH₃)-CH(CH₃)-CH₃&#34;,hill:&#34;C6H14&#34;,cls:&#34;Alkane&#34;}
+  ],
+  /* Cycloalkanes / Alkenes */
+  &#34;C2H4&#34;:[{name:&#34;Ethylene&#34;,iupac:&#34;ethene&#34;,struct:&#34;CH₂=CH₂&#34;,hill:&#34;C2H4&#34;,cls:&#34;Alkene&#34;}],
+  &#34;C3H6&#34;:[
+    {name:&#34;Cyclopropane&#34;,iupac:&#34;cyclopropane&#34;,struct:&#34;cyclo-C₃H₆&#34;,hill:&#34;C3H6&#34;,cls:&#34;Cycloalkane&#34;},
+    {name:&#34;Propene (Propylene)&#34;,iupac:&#34;prop-1-ene&#34;,struct:&#34;CH₂=CH-CH₃&#34;,hill:&#34;C3H6&#34;,cls:&#34;Alkene&#34;}
+  ],
+  &#34;C4H8&#34;:[
+    {name:&#34;1-Butene&#34;,iupac:&#34;but-1-ene&#34;,struct:&#34;CH₂=CH-CH₂-CH₃&#34;,hill:&#34;C4H8&#34;,cls:&#34;Alkene&#34;},
+    {name:&#34;2-Butene&#34;,iupac:&#34;but-2-ene&#34;,struct:&#34;CH₃-CH=CH-CH₃&#34;,hill:&#34;C4H8&#34;,cls:&#34;Alkene&#34;},
+    {name:&#34;Isobutylene&#34;,iupac:&#34;2-methylprop-1-ene&#34;,struct:&#34;CH₂=C(CH₃)₂&#34;,hill:&#34;C4H8&#34;,cls:&#34;Alkene&#34;},
+    {name:&#34;Cyclobutane&#34;,iupac:&#34;cyclobutane&#34;,struct:&#34;cyclo-C₄H₈&#34;,hill:&#34;C4H8&#34;,cls:&#34;Cycloalkane&#34;}
+  ],
+  &#34;C5H10&#34;:[
+    {name:&#34;1-Pentene&#34;,iupac:&#34;pent-1-ene&#34;,struct:&#34;CH₂=CH-CH₂-CH₂-CH₃&#34;,hill:&#34;C5H10&#34;,cls:&#34;Alkene&#34;},
+    {name:&#34;2-Pentene&#34;,iupac:&#34;pent-2-ene&#34;,struct:&#34;CH₃-CH=CH-CH₂-CH₃&#34;,hill:&#34;C5H10&#34;,cls:&#34;Alkene&#34;},
+    {name:&#34;2-Methylbut-1-ene&#34;,iupac:&#34;2-methylbut-1-ene&#34;,struct:&#34;CH₂=C(CH₃)-CH₂-CH₃&#34;,hill:&#34;C5H10&#34;,cls:&#34;Alkene&#34;},
+    {name:&#34;3-Methylbut-1-ene&#34;,iupac:&#34;3-methylbut-1-ene&#34;,struct:&#34;CH₂=CH-CH(CH₃)₂&#34;,hill:&#34;C5H10&#34;,cls:&#34;Alkene&#34;},
+    {name:&#34;Cyclopentane&#34;,iupac:&#34;cyclopentane&#34;,struct:&#34;cyclo-C₅H₁₀&#34;,hill:&#34;C5H10&#34;,cls:&#34;Cycloalkane&#34;}
+  ],
+  &#34;C6H12&#34;:[
+    {name:&#34;1-Hexene&#34;,iupac:&#34;hex-1-ene&#34;,struct:&#34;CH₂=CH-(CH₂)₃-CH₃&#34;,hill:&#34;C6H12&#34;,cls:&#34;Alkene&#34;},
+    {name:&#34;2-Hexene&#34;,iupac:&#34;hex-2-ene&#34;,struct:&#34;CH₃-CH=CH-CH₂-CH₂-CH₃&#34;,hill:&#34;C6H12&#34;,cls:&#34;Alkene&#34;},
+    {name:&#34;3-Hexene&#34;,iupac:&#34;hex-3-ene&#34;,struct:&#34;CH₃-CH₂-CH=CH-CH₂-CH₃&#34;,hill:&#34;C6H12&#34;,cls:&#34;Alkene&#34;},
+    {name:&#34;Cyclohexane&#34;,iupac:&#34;cyclohexane&#34;,struct:&#34;cyclo-C₆H₁₂&#34;,hill:&#34;C6H12&#34;,cls:&#34;Cycloalkane&#34;},
+    {name:&#34;Methylcyclopentane&#34;,iupac:&#34;methylcyclopentane&#34;,struct:&#34;CH₃-cyclo-C₅H₉&#34;,hill:&#34;C6H12&#34;,cls:&#34;Cycloalkane&#34;}
+  ],
+  /* Alkynes */
+  &#34;C2H2&#34;:[{name:&#34;Acetylene&#34;,iupac:&#34;ethyne&#34;,struct:&#34;HC≡CH&#34;,hill:&#34;C2H2&#34;,cls:&#34;Alkyne&#34;}],
+  &#34;C3H4&#34;:[
+    {name:&#34;Propyne&#34;,iupac:&#34;prop-1-yne&#34;,struct:&#34;CH₃-C≡CH&#34;,hill:&#34;C3H4&#34;,cls:&#34;Alkyne&#34;},
+    {name:&#34;Allene&#34;,iupac:&#34;propa-1,2-diene&#34;,struct:&#34;CH₂=C=CH₂&#34;,hill:&#34;C3H4&#34;,cls:&#34;Diene&#34;}
+  ],
+  &#34;C4H6&#34;:[
+    {name:&#34;1-Butyne&#34;,iupac:&#34;but-1-yne&#34;,struct:&#34;HC≡C-CH₂-CH₃&#34;,hill:&#34;C4H6&#34;,cls:&#34;Alkyne&#34;},
+    {name:&#34;2-Butyne&#34;,iupac:&#34;but-2-yne&#34;,struct:&#34;CH₃-C≡C-CH₃&#34;,hill:&#34;C4H6&#34;,cls:&#34;Alkyne&#34;},
+    {name:&#34;1,3-Butadiene&#34;,iupac:&#34;buta-1,3-diene&#34;,struct:&#34;CH₂=CH-CH=CH₂&#34;,hill:&#34;C4H6&#34;,cls:&#34;Diene&#34;}
+  ],
+  &#34;C5H8&#34;:[
+    {name:&#34;1-Pentyne&#34;,iupac:&#34;pent-1-yne&#34;,struct:&#34;HC≡C-CH₂-CH₂-CH₃&#34;,hill:&#34;C5H8&#34;,cls:&#34;Alkyne&#34;},
+    {name:&#34;2-Pentyne&#34;,iupac:&#34;pent-2-yne&#34;,struct:&#34;CH₃-C≡C-CH₂-CH₃&#34;,hill:&#34;C5H8&#34;,cls:&#34;Alkyne&#34;},
+    {name:&#34;1,3-Pentadiene&#34;,iupac:&#34;penta-1,3-diene&#34;,struct:&#34;CH₂=CH-CH=CH-CH₃&#34;,hill:&#34;C5H8&#34;,cls:&#34;Diene&#34;},
+    {name:&#34;Isoprene&#34;,iupac:&#34;2-methylbuta-1,3-diene&#34;,struct:&#34;CH₂=C(CH₃)-CH=CH₂&#34;,hill:&#34;C5H8&#34;,cls:&#34;Diene&#34;}
+  ],
+  &#34;C6H10&#34;:[
+    {name:&#34;1-Hexyne&#34;,iupac:&#34;hex-1-yne&#34;,struct:&#34;HC≡C-(CH₂)₃-CH₃&#34;,hill:&#34;C6H10&#34;,cls:&#34;Alkyne&#34;},
+    {name:&#34;2-Hexyne&#34;,iupac:&#34;hex-2-yne&#34;,struct:&#34;CH₃-C≡C-CH₂-CH₂-CH₃&#34;,hill:&#34;C6H10&#34;,cls:&#34;Alkyne&#34;},
+    {name:&#34;3-Hexyne&#34;,iupac:&#34;hex-3-yne&#34;,struct:&#34;CH₃-CH₂-C≡C-CH₂-CH₃&#34;,hill:&#34;C6H10&#34;,cls:&#34;Alkyne&#34;},
+    {name:&#34;1,3-Hexadiene&#34;,iupac:&#34;hexa-1,3-diene&#34;,struct:&#34;CH₂=CH-CH=CH-CH₂-CH₃&#34;,hill:&#34;C6H10&#34;,cls:&#34;Diene&#34;},
+    {name:&#34;Cyclohexene&#34;,iupac:&#34;cyclohex-1-ene&#34;,struct:&#34;cyclo-C₆H₁₀ (1 C=C)&#34;,hill:&#34;C6H10&#34;,cls:&#34;Cycloalkene&#34;}
+  ],
+  /* Aromatic */
+  &#34;C6H6&#34;:[{name:&#34;Benzene&#34;,iupac:&#34;benzene&#34;,struct:&#34;C₆H₆ (aromatic ring)&#34;,hill:&#34;C6H6&#34;,cls:&#34;Aromatic hydrocarbon&#34;}],
+  &#34;C7H8&#34;:[
+    {name:&#34;Toluene&#34;,iupac:&#34;methylbenzene&#34;,struct:&#34;C₆H₅-CH₃&#34;,hill:&#34;C7H8&#34;,cls:&#34;Aromatic hydrocarbon&#34;},
+    {name:&#34;Norbornadiene&#34;,iupac:&#34;bicyclo[2.2.1]hepta-2,5-diene&#34;,struct:&#34;C₇H₈ (bicyclic diene)&#34;,hill:&#34;C7H8&#34;,cls:&#34;Diene&#34;}
+  ],
+  &#34;C8H8&#34;:[
+    {name:&#34;Styrene&#34;,iupac:&#34;ethenylbenzene&#34;,struct:&#34;C₆H₅-CH=CH₂&#34;,hill:&#34;C8H8&#34;,cls:&#34;Aromatic + alkene&#34;},
+    {name:&#34;Cubane&#34;,iupac:&#34;pentacyclo[4.2.0]octane&#34;,struct:&#34;C₈H₈ (cubane)&#34;,hill:&#34;C8H8&#34;,cls:&#34;Cycloalkane&#34;}
+  ],
+  &#34;C8H10&#34;:[
+    {name:&#34;o-Xylene&#34;,iupac:&#34;1,2-dimethylbenzene&#34;,struct:&#34;1,2-(CH₃)₂-C₆H₄&#34;,hill:&#34;C8H10&#34;,cls:&#34;Aromatic hydrocarbon&#34;},
+    {name:&#34;m-Xylene&#34;,iupac:&#34;1,3-dimethylbenzene&#34;,struct:&#34;1,3-(CH₃)₂-C₆H₄&#34;,hill:&#34;C8H10&#34;,cls:&#34;Aromatic hydrocarbon&#34;},
+    {name:&#34;p-Xylene&#34;,iupac:&#34;1,4-dimethylbenzene&#34;,struct:&#34;1,4-(CH₃)₂-C₆H₄&#34;,hill:&#34;C8H10&#34;,cls:&#34;Aromatic hydrocarbon&#34;},
+    {name:&#34;Ethylbenzene&#34;,iupac:&#34;ethylbenzene&#34;,struct:&#34;C₆H₅-CH₂-CH₃&#34;,hill:&#34;C8H10&#34;,cls:&#34;Aromatic hydrocarbon&#34;}
+  ],
+  &#34;C10H8&#34;:[{name:&#34;Naphthalene&#34;,iupac:&#34;naphthalene&#34;,struct:&#34;C₁₀H₈ (fused bicyclic)&#34;,hill:&#34;C10H8&#34;,cls:&#34;Polycyclic aromatic&#34;}],
+  /* Alcohols */
+  &#34;CH4O&#34;:[{name:&#34;Methanol&#34;,iupac:&#34;methanol&#34;,struct:&#34;CH₃-OH&#34;,hill:&#34;CH4O&#34;,cls:&#34;Alcohol&#34;}],
+  &#34;C2H6O&#34;:[
+    {name:&#34;Ethanol&#34;,iupac:&#34;ethanol&#34;,struct:&#34;CH₃-CH₂-OH&#34;,hill:&#34;C2H6O&#34;,cls:&#34;Alcohol&#34;},
+    {name:&#34;Dimethyl ether&#34;,iupac:&#34;methoxymethane&#34;,struct:&#34;CH₃-O-CH₃&#34;,hill:&#34;C2H6O&#34;,cls:&#34;Ether&#34;}
+  ],
+  &#34;C3H8O&#34;:[
+    {name:&#34;1-Propanol&#34;,iupac:&#34;propan-1-ol&#34;,struct:&#34;CH₃-CH₂-CH₂-OH&#34;,hill:&#34;C3H8O&#34;,cls:&#34;Alcohol&#34;},
+    {name:&#34;2-Propanol (Isopropanol)&#34;,iupac:&#34;propan-2-ol&#34;,struct:&#34;CH₃-CH(OH)-CH₃&#34;,hill:&#34;C3H8O&#34;,cls:&#34;Alcohol&#34;},
+    {name:&#34;Methyl ethyl ether&#34;,iupac:&#34;methoxyethane&#34;,struct:&#34;CH₃-O-CH₂-CH₃&#34;,hill:&#34;C3H8O&#34;,cls:&#34;Ether&#34;}
+  ],
+  &#34;C4H10O&#34;:[
+    {name:&#34;1-Butanol&#34;,iupac:&#34;butan-1-ol&#34;,struct:&#34;CH₃-CH₂-CH₂-CH₂-OH&#34;,hill:&#34;C4H10O&#34;,cls:&#34;Alcohol&#34;},
+    {name:&#34;2-Butanol&#34;,iupac:&#34;butan-2-ol&#34;,struct:&#34;CH₃-CH(OH)-CH₂-CH₃&#34;,hill:&#34;C4H10O&#34;,cls:&#34;Alcohol&#34;},
+    {name:&#34;tert-Butanol&#34;,iupac:&#34;2-methylpropan-2-ol&#34;,struct:&#34;C(CH₃)₃-OH&#34;,hill:&#34;C4H10O&#34;,cls:&#34;Alcohol&#34;},
+    {name:&#34;Isobutanol&#34;,iupac:&#34;2-methylpropan-1-ol&#34;,struct:&#34;CH₃-CH(CH₃)-CH₂-OH&#34;,hill:&#34;C4H10O&#34;,cls:&#34;Alcohol&#34;},
+    {name:&#34;Diethyl ether&#34;,iupac:&#34;ethoxyethane&#34;,struct:&#34;CH₃-CH₂-O-CH₂-CH₃&#34;,hill:&#34;C4H10O&#34;,cls:&#34;Ether&#34;}
+  ],
+  &#34;C5H12O&#34;:[
+    {name:&#34;1-Pentanol&#34;,iupac:&#34;pentan-1-ol&#34;,struct:&#34;CH₃-(CH₂)₃-CH₂-OH&#34;,hill:&#34;C5H12O&#34;,cls:&#34;Alcohol&#34;},
+    {name:&#34;2-Pentanol&#34;,iupac:&#34;pentan-2-ol&#34;,struct:&#34;CH₃-CH(OH)-CH₂-CH₂-CH₃&#34;,hill:&#34;C5H12O&#34;,cls:&#34;Alcohol&#34;},
+    {name:&#34;3-Pentanol&#34;,iupac:&#34;pentan-3-ol&#34;,struct:&#34;CH₃-CH₂-CH(OH)-CH₂-CH₃&#34;,hill:&#34;C5H12O&#34;,cls:&#34;Alcohol&#34;},
+    {name:&#34;2-Methyl-1-butanol&#34;,iupac:&#34;2-methylbutan-1-ol&#34;,struct:&#34;CH₃-CH(CH₃)-CH₂-CH₂-OH&#34;,hill:&#34;C5H12O&#34;,cls:&#34;Alcohol&#34;}
+  ],
+  /* KEY: C3H6O — Ketone vs Aldehyde vs Alkenol (the big fix) */
+  &#34;C3H6O&#34;:[
+    {name:&#34;Acetone&#34;,iupac:&#34;propan-2-one&#34;,struct:&#34;CH₃-CO-CH₃&#34;,hill:&#34;C3H6O&#34;,cls:&#34;Ketone&#34;},
+    {name:&#34;Propanal&#34;,iupac:&#34;propanal&#34;,struct:&#34;CH₃-CH₂-CHO&#34;,hill:&#34;C3H6O&#34;,cls:&#34;Aldehyde&#34;},
+    {name:&#34;Allyl alcohol&#34;,iupac:&#34;prop-2-en-1-ol&#34;,struct:&#34;CH₂=CH-CH₂-OH&#34;,hill:&#34;C3H6O&#34;,cls:&#34;Alkenol&#34;},
+    {name:&#34;Propylene oxide&#34;,iupac:&#34;2-methyloxirane&#34;,struct:&#34;CH₃-C₂H₃O (epoxide)&#34;,hill:&#34;C3H6O&#34;,cls:&#34;Epoxide&#34;},
+    {name:&#34;Oxetane&#34;,iupac:&#34;oxetane&#34;,struct:&#34;cyclo-O-C₃H₆&#34;,hill:&#34;C3H6O&#34;,cls:&#34;Cyclic ether&#34;}
+  ],
+  &#34;C4H8O&#34;:[
+    {name:&#34;Butanal&#34;,iupac:&#34;butanal&#34;,struct:&#34;CH₃-CH₂-CH₂-CHO&#34;,hill:&#34;C4H8O&#34;,cls:&#34;Aldehyde&#34;},
+    {name:&#34;Methyl ethyl ketone&#34;,iupac:&#34;butan-2-one&#34;,struct:&#34;CH₃-CO-CH₂-CH₃&#34;,hill:&#34;C4H8O&#34;,cls:&#34;Ketone&#34;},
+    {name:&#34;2-Methylpropanal&#34;,iupac:&#34;2-methylpropanal&#34;,struct:&#34;(CH₃)₂CH-CHO&#34;,hill:&#34;C4H8O&#34;,cls:&#34;Aldehyde&#34;},
+    {name:&#34;Tetrahydrofuran (THF)&#34;,iupac:&#34;oxolane&#34;,struct:&#34;cyclo-O-(CH₂)₄&#34;,hill:&#34;C4H8O&#34;,cls:&#34;Cyclic ether&#34;}
+  ],
+  /* KEY: C5H10O — pent-2-en-1-ol vs pentanal */
+  &#34;C5H10O&#34;:[
+    {name:&#34;Pentanal (n-Valeraldehyde)&#34;,iupac:&#34;pentanal&#34;,struct:&#34;CH₃-CH₂-CH₂-CH₂-CHO&#34;,hill:&#34;C5H10O&#34;,cls:&#34;Aldehyde&#34;},
+    {name:&#34;Pentan-2-one&#34;,iupac:&#34;pentan-2-one&#34;,struct:&#34;CH₃-CO-CH₂-CH₂-CH₃&#34;,hill:&#34;C5H10O&#34;,cls:&#34;Ketone&#34;},
+    {name:&#34;Pentan-3-one&#34;,iupac:&#34;pentan-3-one&#34;,struct:&#34;CH₃-CH₂-CO-CH₂-CH₃&#34;,hill:&#34;C5H10O&#34;,cls:&#34;Ketone&#34;},
+    {name:&#34;3-Methylbutanal&#34;,iupac:&#34;3-methylbutanal&#34;,struct:&#34;(CH₃)₂CH-CH₂-CHO&#34;,hill:&#34;C5H10O&#34;,cls:&#34;Aldehyde&#34;},
+    {name:&#34;Pent-2-en-1-ol&#34;,iupac:&#34;pent-2-en-1-ol&#34;,struct:&#34;CH₃-CH₂-CH=CH-CH₂-OH&#34;,hill:&#34;C5H10O&#34;,cls:&#34;Alkenol&#34;},
+    {name:&#34;Pent-4-en-1-ol&#34;,iupac:&#34;pent-4-en-1-ol&#34;,struct:&#34;CH₂=CH-CH₂-CH₂-CH₂-OH&#34;,hill:&#34;C5H10O&#34;,cls:&#34;Alkenol&#34;},
+    {name:&#34;Pent-2-en-3-ol&#34;,iupac:&#34;pent-2-en-3-ol&#34;,struct:&#34;CH₃-CH₂-C(OH)=CH-CH₃&#34;,hill:&#34;C5H10O&#34;,cls:&#34;Alkenol&#34;}
+  ],
+  &#34;C6H12O&#34;:[
+    {name:&#34;Hexanal&#34;,iupac:&#34;hexanal&#34;,struct:&#34;CH₃-(CH₂)₄-CHO&#34;,hill:&#34;C6H12O&#34;,cls:&#34;Aldehyde&#34;},
+    {name:&#34;Hexan-2-one&#34;,iupac:&#34;hexan-2-one&#34;,struct:&#34;CH₃-CO-(CH₂)₃-CH₃&#34;,hill:&#34;C6H12O&#34;,cls:&#34;Ketone&#34;},
+    {name:&#34;Hexan-3-one&#34;,iupac:&#34;hexan-3-one&#34;,struct:&#34;CH₃-CH₂-CO-CH₂-CH₂-CH₃&#34;,hill:&#34;C6H12O&#34;,cls:&#34;Ketone&#34;},
+    {name:&#34;Cyclohexanol&#34;,iupac:&#34;cyclohexanol&#34;,struct:&#34;cyclo-C₆H₁₁-OH&#34;,hill:&#34;C6H12O&#34;,cls:&#34;Cycloalcohol&#34;}
+  ],
+  /* Carboxylic acids */
+  &#34;CH2O2&#34;:[{name:&#34;Formic acid&#34;,iupac:&#34;methanoic acid&#34;,struct:&#34;H-COOH&#34;,hill:&#34;CH2O2&#34;,cls:&#34;Carboxylic acid&#34;}],
+  &#34;C2H4O2&#34;:[
+    {name:&#34;Acetic acid&#34;,iupac:&#34;ethanoic acid&#34;,struct:&#34;CH₃-COOH&#34;,hill:&#34;C2H4O2&#34;,cls:&#34;Carboxylic acid&#34;},
+    {name:&#34;Methyl formate&#34;,iupac:&#34;methyl methanoate&#34;,struct:&#34;H-COO-CH₃&#34;,hill:&#34;C2H4O2&#34;,cls:&#34;Ester&#34;},
+    {name:&#34;Glycolaldehyde&#34;,iupac:&#34;glycolaldehyde&#34;,struct:&#34;HOCH₂-CHO&#34;,hill:&#34;C2H4O2&#34;,cls:&#34;Hydroxy aldehyde&#34;}
+  ],
+  &#34;C3H6O2&#34;:[
+    {name:&#34;Propionic acid&#34;,iupac:&#34;propanoic acid&#34;,struct:&#34;CH₃-CH₂-COOH&#34;,hill:&#34;C3H6O2&#34;,cls:&#34;Carboxylic acid&#34;},
+    {name:&#34;Methyl acetate&#34;,iupac:&#34;methyl ethanoate&#34;,struct:&#34;CH₃-COO-CH₃&#34;,hill:&#34;C3H6O2&#34;,cls:&#34;Ester&#34;},
+    {name:&#34;Ethyl formate&#34;,iupac:&#34;ethyl methanoate&#34;,struct:&#34;H-COO-CH₂-CH₃&#34;,hill:&#34;C3H6O2&#34;,cls:&#34;Ester&#34;},
+    {name:&#34;Hydroxyacetone&#34;,iupac:&#34;1-hydroxypropan-2-one&#34;,struct:&#34;CH₃-CO-CH₂-OH&#34;,hill:&#34;C3H6O2&#34;,cls:&#34;Hydroxy ketone&#34;}
+  ],
+  &#34;C4H8O2&#34;:[
+    {name:&#34;n-Butyric acid&#34;,iupac:&#34;butanoic acid&#34;,struct:&#34;CH₃-CH₂-CH₂-COOH&#34;,hill:&#34;C4H8O2&#34;,cls:&#34;Carboxylic acid&#34;},
+    {name:&#34;Ethyl acetate&#34;,iupac:&#34;ethyl ethanoate&#34;,struct:&#34;CH₃-COO-CH₂-CH₃&#34;,hill:&#34;C4H8O2&#34;,cls:&#34;Ester&#34;},
+    {name:&#34;Methyl propanoate&#34;,iupac:&#34;methyl propanoate&#34;,struct:&#34;CH₃-CH₂-COO-CH₃&#34;,hill:&#34;C4H8O2&#34;,cls:&#34;Ester&#34;},
+    {name:&#34;1,4-Dioxane&#34;,iupac:&#34;1,4-dioxane&#34;,struct:&#34;O(CH₂CH₂)₂O (ring)&#34;,hill:&#34;C4H8O2&#34;,cls:&#34;Cyclic ether&#34;}
+  ],
+  /* Aldehydes */
+  &#34;CH2O&#34;:[{name:&#34;Formaldehyde&#34;,iupac:&#34;methanal&#34;,struct:&#34;H-CHO&#34;,hill:&#34;CH2O&#34;,cls:&#34;Aldehyde&#34;}],
+  &#34;C2H4O&#34;:[
+    {name:&#34;Acetaldehyde&#34;,iupac:&#34;ethanal&#34;,struct:&#34;CH₃-CHO&#34;,hill:&#34;C2H4O&#34;,cls:&#34;Aldehyde&#34;},
+    {name:&#34;Ethylene oxide&#34;,iupac:&#34;oxirane&#34;,struct:&#34;CH₂-O-CH₂ (epoxide)&#34;,hill:&#34;C2H4O&#34;,cls:&#34;Epoxide&#34;}
+  ],
+  /* Aromatic with O */
+  &#34;C6H6O&#34;:[{name:&#34;Phenol&#34;,iupac:&#34;phenol&#34;,struct:&#34;C₆H₅-OH&#34;,hill:&#34;C6H6O&#34;,cls:&#34;Phenol&#34;}],
+  &#34;C7H6O&#34;:[{name:&#34;Benzaldehyde&#34;,iupac:&#34;benzaldehyde&#34;,struct:&#34;C₆H₅-CHO&#34;,hill:&#34;C7H6O&#34;,cls:&#34;Aromatic aldehyde&#34;}],
+  &#34;C7H6O2&#34;:[
+    {name:&#34;Benzoic acid&#34;,iupac:&#34;benzoic acid&#34;,struct:&#34;C₆H₅-COOH&#34;,hill:&#34;C7H6O2&#34;,cls:&#34;Aromatic carboxylic acid&#34;},
+    {name:&#34;Salicylaldehyde&#34;,iupac:&#34;2-hydroxybenzaldehyde&#34;,struct:&#34;2-HO-C₆H₄-CHO&#34;,hill:&#34;C7H6O2&#34;,cls:&#34;Aromatic aldehyde&#34;}
+  ],
+  &#34;C7H8O&#34;:[
+    {name:&#34;Benzyl alcohol&#34;,iupac:&#34;phenylmethanol&#34;,struct:&#34;C₆H₅-CH₂-OH&#34;,hill:&#34;C7H8O&#34;,cls:&#34;Aromatic alcohol&#34;},
+    {name:&#34;Anisole&#34;,iupac:&#34;methoxybenzene&#34;,struct:&#34;C₆H₅-O-CH₃&#34;,hill:&#34;C7H8O&#34;,cls:&#34;Aromatic ether&#34;},
+    {name:&#34;o-Cresol&#34;,iupac:&#34;2-methylphenol&#34;,struct:&#34;2-CH₃-C₆H₄-OH&#34;,hill:&#34;C7H8O&#34;,cls:&#34;Phenol&#34;},
+    {name:&#34;m-Cresol&#34;,iupac:&#34;3-methylphenol&#34;,struct:&#34;3-CH₃-C₆H₄-OH&#34;,hill:&#34;C7H8O&#34;,cls:&#34;Phenol&#34;},
+    {name:&#34;p-Cresol&#34;,iupac:&#34;4-methylphenol&#34;,struct:&#34;4-CH₃-C₆H₄-OH&#34;,hill:&#34;C7H8O&#34;,cls:&#34;Phenol&#34;}
+  ],
+  &#34;C8H8O&#34;:[
+    {name:&#34;Acetophenone&#34;,iupac:&#34;1-phenylethan-1-one&#34;,struct:&#34;C₆H₅-CO-CH₃&#34;,hill:&#34;C8H8O&#34;,cls:&#34;Aromatic ketone&#34;},
+    {name:&#34;Phenylacetaldehyde&#34;,iupac:&#34;2-phenylacetaldehyde&#34;,struct:&#34;C₆H₅-CH₂-CHO&#34;,hill:&#34;C8H8O&#34;,cls:&#34;Aromatic aldehyde&#34;}
+  ],
+  &#34;C9H8O&#34;:[
+    {name:&#34;Cinnamaldehyde&#34;,iupac:&#34;(E)-3-phenylprop-2-enal&#34;,struct:&#34;C₆H₅-CH=CH-CHO&#34;,hill:&#34;C9H8O&#34;,cls:&#34;Aromatic α,β-unsaturated aldehyde&#34;},
+    {name:&#34;1-Indanone&#34;,iupac:&#34;2,3-dihydro-1H-inden-1-one&#34;,struct:&#34;C₆H₄-CO-(CH₂)₂ (ring)&#34;,hill:&#34;C9H8O&#34;,cls:&#34;Aromatic ketone&#34;}
+  ],
+  &#34;C9H8O2&#34;:[
+    {name:&#34;Cinnamic acid&#34;,iupac:&#34;(E)-3-phenylprop-2-enoic acid&#34;,struct:&#34;C₆H₅-CH=CH-COOH&#34;,hill:&#34;C9H8O2&#34;,cls:&#34;Aromatic carboxylic acid&#34;}
+  ],
+  &#34;C8H8O3&#34;:[
+    {name:&#34;Vanillin&#34;,iupac:&#34;4-hydroxy-3-methoxybenzaldehyde&#34;,struct:&#34;4-HO-3-CH₃O-C₆H₃-CHO&#34;,hill:&#34;C8H8O3&#34;,cls:&#34;Aromatic aldehyde&#34;},
+    {name:&#34;Methyl salicylate&#34;,iupac:&#34;methyl 2-hydroxybenzoate&#34;,struct:&#34;2-HO-C₆H₄-COOCH₃&#34;,hill:&#34;C8H8O3&#34;,cls:&#34;Aromatic ester&#34;}
+  ],
+  &#34;C9H8O4&#34;:[{name:&#34;Aspirin&#34;,iupac:&#34;2-acetoxybenzoic acid&#34;,struct:&#34;2-CH₃COO-C₆H₄-COOH&#34;,hill:&#34;C9H8O4&#34;,cls:&#34;Aromatic ester + acid&#34;}],
+  &#34;C13H10O&#34;:[{name:&#34;Benzophenone&#34;,iupac:&#34;diphenylmethanone&#34;,struct:&#34;C₆H₅-CO-C₆H₅&#34;,hill:&#34;C13H10O&#34;,cls:&#34;Aromatic ketone&#34;}],
+  &#34;C15H12O&#34;:[{name:&#34;Chalcone&#34;,iupac:&#34;(E)-1,3-diphenylprop-2-en-1-one&#34;,struct:&#34;C₆H₅-CO-CH=CH-C₆H₅&#34;,hill:&#34;C15H12O&#34;,cls:&#34;Aromatic enone&#34;}],
+  &#34;C10H10O&#34;:[{name:&#34;Benzalacetone&#34;,iupac:&#34;(E)-4-phenylbut-3-en-2-one&#34;,struct:&#34;C₆H₅-CH=CH-CO-CH₃&#34;,hill:&#34;C10H10O&#34;,cls:&#34;Aromatic enone&#34;}],
+  /* Nitrogen */
+  &#34;C6H7N&#34;:[{name:&#34;Aniline&#34;,iupac:&#34;aniline&#34;,struct:&#34;C₆H₅-NH₂&#34;,hill:&#34;C6H7N&#34;,cls:&#34;Aromatic amine&#34;}],
+  &#34;C6H5NO2&#34;:[{name:&#34;Nitrobenzene&#34;,iupac:&#34;nitrobenzene&#34;,struct:&#34;C₆H₅-NO₂&#34;,hill:&#34;C6H5NO2&#34;,cls:&#34;Nitro compound&#34;}],
+  &#34;C5H5N&#34;:[{name:&#34;Pyridine&#34;,iupac:&#34;pyridine&#34;,struct:&#34;N in 6-membered ring&#34;,hill:&#34;C5H5N&#34;,cls:&#34;Aromatic heterocycle&#34;}],
+  &#34;C4H5N&#34;:[{name:&#34;Pyrrole&#34;,iupac:&#34;1H-pyrrole&#34;,struct:&#34;N-H in 5-membered ring&#34;,hill:&#34;C4H5N&#34;,cls:&#34;Aromatic heterocycle&#34;}],
+  &#34;CH5N&#34;:[{name:&#34;Methylamine&#34;,iupac:&#34;methanamine&#34;,struct:&#34;CH₃-NH₂&#34;,hill:&#34;CH5N&#34;,cls:&#34;Primary amine&#34;}],
+  &#34;C2H7N&#34;:[{name:&#34;Ethylamine&#34;,iupac:&#34;ethanamine&#34;,struct:&#34;CH₃-CH₂-NH₂&#34;,hill:&#34;C2H7N&#34;,cls:&#34;Primary amine&#34;}],
+  &#34;C3H9N&#34;:[
+    {name:&#34;n-Propylamine&#34;,iupac:&#34;propan-1-amine&#34;,struct:&#34;CH₃-CH₂-CH₂-NH₂&#34;,hill:&#34;C3H9N&#34;,cls:&#34;Primary amine&#34;},
+    {name:&#34;Isopropylamine&#34;,iupac:&#34;propan-2-amine&#34;,struct:&#34;CH₃-CH(NH₂)-CH₃&#34;,hill:&#34;C3H9N&#34;,cls:&#34;Primary amine&#34;},
+    {name:&#34;Trimethylamine&#34;,iupac:&#34;N,N-dimethylmethanamine&#34;,struct:&#34;(CH₃)₃N&#34;,hill:&#34;C3H9N&#34;,cls:&#34;Tertiary amine&#34;}
+  ],
+  &#34;C2H5NO&#34;:[{name:&#34;Acetamide&#34;,iupac:&#34;acetamide&#34;,struct:&#34;CH₃-CONH₂&#34;,hill:&#34;C2H5NO&#34;,cls:&#34;Amide&#34;}],
+  &#34;C7H7NO&#34;:[{name:&#34;Benzamide&#34;,iupac:&#34;benzamide&#34;,struct:&#34;C₆H₅-CONH₂&#34;,hill:&#34;C7H7NO&#34;,cls:&#34;Amide&#34;}],
+  &#34;C2H3N&#34;:[{name:&#34;Acetonitrile&#34;,iupac:&#34;ethanenitrile&#34;,struct:&#34;CH₃-C≡N&#34;,hill:&#34;C2H3N&#34;,cls:&#34;Nitrile&#34;}],
+  &#34;C7H5N&#34;:[{name:&#34;Benzonitrile&#34;,iupac:&#34;benzonitrile&#34;,struct:&#34;C₆H₅-C≡N&#34;,hill:&#34;C7H5N&#34;,cls:&#34;Nitrile&#34;}],
+  &#34;CH4N2O&#34;:[{name:&#34;Urea&#34;,iupac:&#34;carbamide&#34;,struct:&#34;H₂N-CO-NH₂&#34;,hill:&#34;CH4N2O&#34;,cls:&#34;Amide&#34;}],
+  &#34;C8H9NO&#34;:[{name:&#34;Acetanilide&#34;,iupac:&#34;N-phenylacetamide&#34;,struct:&#34;C₆H₅-NH-CO-CH₃&#34;,hill:&#34;C8H9NO&#34;,cls:&#34;Amide&#34;}],
+  &#34;C8H9NO2&#34;:[{name:&#34;Paracetamol&#34;,iupac:&#34;4-acetamidophenol&#34;,struct:&#34;4-HO-C₆H₄-NH-COCH₃&#34;,hill:&#34;C8H9NO2&#34;,cls:&#34;Amide&#34;}],
+  &#34;C8H10N4O2&#34;:[{name:&#34;Caffeine&#34;,iupac:&#34;1,3,7-trimethylxanthine&#34;,struct:&#34;C₈H₁₀N₄O₂ (purine)&#34;,hill:&#34;C8H10N4O2&#34;,cls:&#34;Alkaloid&#34;}],
+  /* Halogens */
+  &#34;CH3Cl&#34;:[{name:&#34;Chloromethane&#34;,iupac:&#34;chloromethane&#34;,struct:&#34;CH₃-Cl&#34;,hill:&#34;CH3Cl&#34;,cls:&#34;Haloalkane&#34;}],
+  &#34;C2H5Cl&#34;:[{name:&#34;Chloroethane&#34;,iupac:&#34;chloroethane&#34;,struct:&#34;CH₃-CH₂-Cl&#34;,hill:&#34;C2H5Cl&#34;,cls:&#34;Haloalkane&#34;}],
+  &#34;C6H5Cl&#34;:[{name:&#34;Chlorobenzene&#34;,iupac:&#34;chlorobenzene&#34;,struct:&#34;C₆H₅-Cl&#34;,hill:&#34;C6H5Cl&#34;,cls:&#34;Aromatic halide&#34;}],
+  &#34;C6H5Br&#34;:[{name:&#34;Bromobenzene&#34;,iupac:&#34;bromobenzene&#34;,struct:&#34;C₆H₅-Br&#34;,hill:&#34;C6H5Br&#34;,cls:&#34;Aromatic halide&#34;}],
+  /* Diols, polyols */
+  &#34;C2H6O2&#34;:[{name:&#34;Ethylene glycol&#34;,iupac:&#34;ethane-1,2-diol&#34;,struct:&#34;HO-CH₂-CH₂-OH&#34;,hill:&#34;C2H6O2&#34;,cls:&#34;Diol&#34;}],
+  &#34;C3H8O3&#34;:[{name:&#34;Glycerol&#34;,iupac:&#34;propane-1,2,3-triol&#34;,struct:&#34;HO-CH₂-CH(OH)-CH₂-OH&#34;,hill:&#34;C3H8O3&#34;,cls:&#34;Triol&#34;}],
+  /* Heterocycles */
+  &#34;C4H4O&#34;:[{name:&#34;Furan&#34;,iupac:&#34;furan&#34;,struct:&#34;O in 5-membered aromatic ring&#34;,hill:&#34;C4H4O&#34;,cls:&#34;Aromatic heterocycle&#34;}],
+  &#34;C4H4S&#34;:[{name:&#34;Thiophene&#34;,iupac:&#34;thiophene&#34;,struct:&#34;S in 5-membered aromatic ring&#34;,hill:&#34;C4H4S&#34;,cls:&#34;Aromatic heterocycle&#34;}],
+  &#34;C3H4N2&#34;:[{name:&#34;Imidazole&#34;,iupac:&#34;1H-imidazole&#34;,struct:&#34;N-H in 5-membered ring with 2N&#34;,hill:&#34;C3H4N2&#34;,cls:&#34;Aromatic heterocycle&#34;}],
+  &#34;C5H4O2&#34;:[{name:&#34;Furfural&#34;,iupac:&#34;furan-2-carbaldehyde&#34;,struct:&#34;Furan-CHO&#34;,hill:&#34;C5H4O2&#34;,cls:&#34;Aromatic aldehyde&#34;}],
+  &#34;C8H7N&#34;:[{name:&#34;Indole&#34;,iupac:&#34;1H-indole&#34;,struct:&#34;Benzene fused with pyrrole&#34;,hill:&#34;C8H7N&#34;,cls:&#34;Aromatic heterocycle&#34;}],
+  &#34;C9H7N&#34;:[{name:&#34;Quinoline&#34;,iupac:&#34;quinoline&#34;,struct:&#34;Benzene fused with pyridine&#34;,hill:&#34;C9H7N&#34;,cls:&#34;Aromatic heterocycle&#34;}],
+  /* Phenols / diacids */
+  &#34;C6H6O2&#34;:[
+    {name:&#34;Catechol&#34;,iupac:&#34;benzene-1,2-diol&#34;,struct:&#34;1,2-(OH)₂-C₆H₄&#34;,hill:&#34;C6H6O2&#34;,cls:&#34;Phenol&#34;},
+    {name:&#34;Resorcinol&#34;,iupac:&#34;benzene-1,3-diol&#34;,struct:&#34;1,3-(OH)₂-C₆H₄&#34;,hill:&#34;C6H6O2&#34;,cls:&#34;Phenol&#34;},
+    {name:&#34;Hydroquinone&#34;,iupac:&#34;benzene-1,4-diol&#34;,struct:&#34;1,4-(OH)₂-C₆H₄&#34;,hill:&#34;C6H6O2&#34;,cls:&#34;Phenol&#34;}
+  ],
+  &#34;C7H6O3&#34;:[{name:&#34;Salicylic acid&#34;,iupac:&#34;2-hydroxybenzoic acid&#34;,struct:&#34;2-HO-C₆H₄-COOH&#34;,hill:&#34;C7H6O3&#34;,cls:&#34;Aromatic carboxylic acid&#34;}],
+  &#34;C8H6O4&#34;:[
+    {name:&#34;Phthalic acid&#34;,iupac:&#34;benzene-1,2-dicarboxylic acid&#34;,struct:&#34;1,2-(COOH)₂-C₆H₄&#34;,hill:&#34;C8H6O4&#34;,cls:&#34;Aromatic diacid&#34;},
+    {name:&#34;Isophthalic acid&#34;,iupac:&#34;benzene-1,3-dicarboxylic acid&#34;,struct:&#34;1,3-(COOH)₂-C₆H₄&#34;,hill:&#34;C8H6O4&#34;,cls:&#34;Aromatic diacid&#34;},
+    {name:&#34;Terephthalic acid&#34;,iupac:&#34;benzene-1,4-dicarboxylic acid&#34;,struct:&#34;1,4-(COOH)₂-C₆H₄&#34;,hill:&#34;C8H6O4&#34;,cls:&#34;Aromatic diacid&#34;}
+  ],
+  &#34;C4H4O4&#34;:[
+    {name:&#34;Maleic acid&#34;,iupac:&#34;(Z)-butenedioic acid&#34;,struct:&#34;cis-HOOC-CH=CH-COOH&#34;,hill:&#34;C4H4O4&#34;,cls:&#34;Unsaturated diacid&#34;},
+    {name:&#34;Fumaric acid&#34;,iupac:&#34;(E)-butenedioic acid&#34;,struct:&#34;trans-HOOC-CH=CH-COOH&#34;,hill:&#34;C4H4O4&#34;,cls:&#34;Unsaturated diacid&#34;}
+  ],
+  &#34;C6H10O4&#34;:[{name:&#34;Adipic acid&#34;,iupac:&#34;hexanedioic acid&#34;,struct:&#34;HOOC-(CH₂)₄-COOH&#34;,hill:&#34;C6H10O4&#34;,cls:&#34;Dicarboxylic acid&#34;}],
+  &#34;C6H10O&#34;:[
+    {name:&#34;Cyclohexanone&#34;,iupac:&#34;cyclohexan-1-one&#34;,struct:&#34;cyclo-C₆H₁₀=O&#34;,hill:&#34;C6H10O&#34;,cls:&#34;Cyclic ketone&#34;},
+    {name:&#34;Hex-2-enal&#34;,iupac:&#34;hex-2-enal&#34;,struct:&#34;CH₃-CH₂-CH₂-CH=CH-CHO&#34;,hill:&#34;C6H10O&#34;,cls:&#34;α,β-Unsaturated aldehyde&#34;}
+  ],
+  /* Amino acids */
+  &#34;C2H5NO2&#34;:[{name:&#34;Glycine&#34;,iupac:&#34;aminoacetic acid&#34;,struct:&#34;H₂N-CH₂-COOH&#34;,hill:&#34;C2H5NO2&#34;,cls:&#34;Amino acid&#34;}],
+  &#34;C9H11NO2&#34;:[{name:&#34;Phenylalanine&#34;,iupac:&#34;(S)-2-amino-3-phenylpropanoic acid&#34;,struct:&#34;C₆H₅-CH₂-CH(NH₂)-COOH&#34;,hill:&#34;C9H11NO2&#34;,cls:&#34;Amino acid&#34;}],
+  /* Biochemical */
+  &#34;C6H12O6&#34;:[
+    {name:&#34;Glucose&#34;,iupac:&#34;D-glucopyranose&#34;,struct:&#34;HOCH₂(CHOH)₄CHO (open chain)&#34;,hill:&#34;C6H12O6&#34;,cls:&#34;Monosaccharide&#34;},
+    {name:&#34;Fructose&#34;,iupac:&#34;D-fructose&#34;,struct:&#34;HOCH₂-CO-(CHOH)₃-CH₂OH&#34;,hill:&#34;C6H12O6&#34;,cls:&#34;Monosaccharide&#34;},
+    {name:&#34;Galactose&#34;,iupac:&#34;D-galactose&#34;,struct:&#34;HOCH₂(CHOH)₄CHO (C4-epimer)&#34;,hill:&#34;C6H12O6&#34;,cls:&#34;Monosaccharide&#34;}
+  ],
+  &#34;C12H22O11&#34;:[
+    {name:&#34;Sucrose&#34;,iupac:&#34;sucrose&#34;,struct:&#34;Glucose-Fructose disaccharide&#34;,hill:&#34;C12H22O11&#34;,cls:&#34;Disaccharide&#34;},
+    {name:&#34;Lactose&#34;,iupac:&#34;lactose&#34;,struct:&#34;Galactose-Glucose disaccharide&#34;,hill:&#34;C12H22O11&#34;,cls:&#34;Disaccharide&#34;},
+    {name:&#34;Maltose&#34;,iupac:&#34;maltose&#34;,struct:&#34;Glucose-Glucose disaccharide&#34;,hill:&#34;C12H22O11&#34;,cls:&#34;Disaccharide&#34;}
+  ],
+  &#34;C6H8O6&#34;:[{name:&#34;Vitamin C&#34;,iupac:&#34;L-ascorbic acid&#34;,struct:&#34;L-ascorbic acid (lactone ring)&#34;,hill:&#34;C6H8O6&#34;,cls:&#34;Lactone&#34;}]
+};
+
+/* ── NAME → DB INDEX ────────────────────────────────────── */
+var NAME_INDEX = {
+  &#34;acetone&#34;:&#34;C3H6O:0&#34;,&#34;propan-2-one&#34;:&#34;C3H6O:0&#34;,&#34;dimethyl ketone&#34;:&#34;C3H6O:0&#34;,
+  &#34;propanal&#34;:&#34;C3H6O:1&#34;,&#34;propionaldehyde&#34;:&#34;C3H6O:1&#34;,
+  &#34;allyl alcohol&#34;:&#34;C3H6O:2&#34;,&#34;prop-2-en-1-ol&#34;:&#34;C3H6O:2&#34;,
+  &#34;pent-2-en-1-ol&#34;:&#34;C5H10O:4&#34;,&#34;pent-4-en-1-ol&#34;:&#34;C5H10O:5&#34;,
+  &#34;pentanal&#34;:&#34;C5H10O:0&#34;,&#34;n-valeraldehyde&#34;:&#34;C5H10O:0&#34;,&#34;valeraldehyde&#34;:&#34;C5H10O:0&#34;,
+  &#34;pentan-2-one&#34;:&#34;C5H10O:1&#34;,&#34;pentan-3-one&#34;:&#34;C5H10O:2&#34;,
+  &#34;methane&#34;:&#34;CH4:0&#34;,&#34;ethane&#34;:&#34;C2H6:0&#34;,&#34;propane&#34;:&#34;C3H8:0&#34;,
+  &#34;n-butane&#34;:&#34;C4H10:0&#34;,&#34;butane&#34;:&#34;C4H10:0&#34;,&#34;isobutane&#34;:&#34;C4H10:1&#34;,
+  &#34;n-pentane&#34;:&#34;C5H12:0&#34;,&#34;pentane&#34;:&#34;C5H12:0&#34;,&#34;isopentane&#34;:&#34;C5H12:1&#34;,&#34;neopentane&#34;:&#34;C5H12:2&#34;,
+  &#34;n-hexane&#34;:&#34;C6H14:0&#34;,&#34;hexane&#34;:&#34;C6H14:0&#34;,
+  &#34;ethylene&#34;:&#34;C2H4:0&#34;,&#34;ethene&#34;:&#34;C2H4:0&#34;,
+  &#34;cyclopropane&#34;:&#34;C3H6:0&#34;,&#34;propylene&#34;:&#34;C3H6:1&#34;,&#34;propene&#34;:&#34;C3H6:1&#34;,
+  &#34;1-butene&#34;:&#34;C4H8:0&#34;,&#34;but-1-ene&#34;:&#34;C4H8:0&#34;,&#34;2-butene&#34;:&#34;C4H8:1&#34;,&#34;but-2-ene&#34;:&#34;C4H8:1&#34;,
+  &#34;isobutylene&#34;:&#34;C4H8:2&#34;,&#34;cyclobutane&#34;:&#34;C4H8:3&#34;,
+  &#34;1-pentene&#34;:&#34;C5H10:0&#34;,&#34;pent-1-ene&#34;:&#34;C5H10:0&#34;,&#34;2-pentene&#34;:&#34;C5H10:1&#34;,&#34;pent-2-ene&#34;:&#34;C5H10:1&#34;,
+  &#34;cyclopentane&#34;:&#34;C5H10:4&#34;,
+  &#34;1-hexene&#34;:&#34;C6H12:0&#34;,&#34;hex-1-ene&#34;:&#34;C6H12:0&#34;,&#34;2-hexene&#34;:&#34;C6H12:1&#34;,&#34;hex-2-ene&#34;:&#34;C6H12:1&#34;,
+  &#34;3-hexene&#34;:&#34;C6H12:2&#34;,&#34;hex-3-ene&#34;:&#34;C6H12:2&#34;,&#34;cyclohexane&#34;:&#34;C6H12:3&#34;,
+  &#34;acetylene&#34;:&#34;C2H2:0&#34;,&#34;ethyne&#34;:&#34;C2H2:0&#34;,
+  &#34;propyne&#34;:&#34;C3H4:0&#34;,&#34;methylacetylene&#34;:&#34;C3H4:0&#34;,&#34;allene&#34;:&#34;C3H4:1&#34;,
+  &#34;1,3-butadiene&#34;:&#34;C4H6:2&#34;,&#34;butadiene&#34;:&#34;C4H6:2&#34;,&#34;1-butyne&#34;:&#34;C4H6:0&#34;,&#34;2-butyne&#34;:&#34;C4H6:1&#34;,
+  &#34;isoprene&#34;:&#34;C5H8:3&#34;,
+  &#34;benzene&#34;:&#34;C6H6:0&#34;,&#34;toluene&#34;:&#34;C7H8:0&#34;,&#34;methylbenzene&#34;:&#34;C7H8:0&#34;,
+  &#34;styrene&#34;:&#34;C8H8:0&#34;,&#34;o-xylene&#34;:&#34;C8H10:0&#34;,&#34;m-xylene&#34;:&#34;C8H10:1&#34;,&#34;p-xylene&#34;:&#34;C8H10:2&#34;,&#34;ethylbenzene&#34;:&#34;C8H10:3&#34;,
+  &#34;naphthalene&#34;:&#34;C10H8:0&#34;,
+  &#34;methanol&#34;:&#34;CH4O:0&#34;,&#34;methyl alcohol&#34;:&#34;CH4O:0&#34;,&#34;wood alcohol&#34;:&#34;CH4O:0&#34;,
+  &#34;ethanol&#34;:&#34;C2H6O:0&#34;,&#34;ethyl alcohol&#34;:&#34;C2H6O:0&#34;,&#34;grain alcohol&#34;:&#34;C2H6O:0&#34;,&#34;drinking alcohol&#34;:&#34;C2H6O:0&#34;,
+  &#34;dimethyl ether&#34;:&#34;C2H6O:1&#34;,
+  &#34;1-propanol&#34;:&#34;C3H8O:0&#34;,&#34;propan-1-ol&#34;:&#34;C3H8O:0&#34;,
+  &#34;2-propanol&#34;:&#34;C3H8O:1&#34;,&#34;propan-2-ol&#34;:&#34;C3H8O:1&#34;,&#34;isopropanol&#34;:&#34;C3H8O:1&#34;,&#34;ipa&#34;:&#34;C3H8O:1&#34;,&#34;isopropyl alcohol&#34;:&#34;C3H8O:1&#34;,
+  &#34;1-butanol&#34;:&#34;C4H10O:0&#34;,&#34;butan-1-ol&#34;:&#34;C4H10O:0&#34;,&#34;n-butanol&#34;:&#34;C4H10O:0&#34;,
+  &#34;2-butanol&#34;:&#34;C4H10O:1&#34;,&#34;butan-2-ol&#34;:&#34;C4H10O:1&#34;,
+  &#34;tert-butanol&#34;:&#34;C4H10O:2&#34;,&#34;t-butanol&#34;:&#34;C4H10O:2&#34;,
+  &#34;isobutanol&#34;:&#34;C4H10O:3&#34;,&#34;diethyl ether&#34;:&#34;C4H10O:4&#34;,&#34;ether&#34;:&#34;C4H10O:4&#34;,
+  &#34;phenol&#34;:&#34;C6H6O:0&#34;,&#34;hydroxybenzene&#34;:&#34;C6H6O:0&#34;,
+  &#34;benzaldehyde&#34;:&#34;C7H6O:0&#34;,&#34;benzoic acid&#34;:&#34;C7H6O2:0&#34;,
+  &#34;anisole&#34;:&#34;C7H8O:1&#34;,&#34;methoxybenzene&#34;:&#34;C7H8O:1&#34;,&#34;benzyl alcohol&#34;:&#34;C7H8O:0&#34;,
+  &#34;acetophenone&#34;:&#34;C8H8O:0&#34;,&#34;methyl phenyl ketone&#34;:&#34;C8H8O:0&#34;,
+  &#34;cinnamaldehyde&#34;:&#34;C9H8O:0&#34;,&#34;cinnamic aldehyde&#34;:&#34;C9H8O:0&#34;,&#34;trans-cinnamaldehyde&#34;:&#34;C9H8O:0&#34;,
+  &#34;(e)-3-phenylprop-2-enal&#34;:&#34;C9H8O:0&#34;,&#34;3-phenylprop-2-enal&#34;:&#34;C9H8O:0&#34;,
+  &#34;aspirin&#34;:&#34;C9H8O4:0&#34;,&#34;acetylsalicylic acid&#34;:&#34;C9H8O4:0&#34;,
+  &#34;benzophenone&#34;:&#34;C13H10O:0&#34;,&#34;diphenyl ketone&#34;:&#34;C13H10O:0&#34;,
+  &#34;cinnamic acid&#34;:&#34;C9H8O2:0&#34;,
+  &#34;vanillin&#34;:&#34;C8H8O3:0&#34;,&#34;methyl salicylate&#34;:&#34;C8H8O3:1&#34;,&#34;oil of wintergreen&#34;:&#34;C8H8O3:1&#34;,
+  &#34;salicylic acid&#34;:&#34;C7H6O3:0&#34;,
+  &#34;aniline&#34;:&#34;C6H7N:0&#34;,&#34;phenylamine&#34;:&#34;C6H7N:0&#34;,&#34;nitrobenzene&#34;:&#34;C6H5NO2:0&#34;,
+  &#34;chlorobenzene&#34;:&#34;C6H5Cl:0&#34;,&#34;bromobenzene&#34;:&#34;C6H5Br:0&#34;,
+  &#34;formic acid&#34;:&#34;CH2O2:0&#34;,&#34;methanoic acid&#34;:&#34;CH2O2:0&#34;,
+  &#34;acetic acid&#34;:&#34;C2H4O2:0&#34;,&#34;ethanoic acid&#34;:&#34;C2H4O2:0&#34;,&#34;vinegar&#34;:&#34;C2H4O2:0&#34;,
+  &#34;formaldehyde&#34;:&#34;CH2O:0&#34;,&#34;methanal&#34;:&#34;CH2O:0&#34;,
+  &#34;acetaldehyde&#34;:&#34;C2H4O:0&#34;,&#34;ethanal&#34;:&#34;C2H4O:0&#34;,
+  &#34;butanal&#34;:&#34;C4H8O:0&#34;,&#34;n-butyraldehyde&#34;:&#34;C4H8O:0&#34;,
+  &#34;mek&#34;:&#34;C4H8O:1&#34;,&#34;methyl ethyl ketone&#34;:&#34;C4H8O:1&#34;,&#34;butan-2-one&#34;:&#34;C4H8O:1&#34;,
+  &#34;cyclohexanone&#34;:&#34;C6H10O:0&#34;,
+  &#34;propionic acid&#34;:&#34;C3H6O2:0&#34;,&#34;propanoic acid&#34;:&#34;C3H6O2:0&#34;,
+  &#34;methyl acetate&#34;:&#34;C3H6O2:1&#34;,
+  &#34;butyric acid&#34;:&#34;C4H8O2:0&#34;,&#34;butanoic acid&#34;:&#34;C4H8O2:0&#34;,&#34;n-butyric acid&#34;:&#34;C4H8O2:0&#34;,
+  &#34;ethyl acetate&#34;:&#34;C4H8O2:1&#34;,
+  &#34;acetamide&#34;:&#34;C2H5NO:0&#34;,&#34;benzamide&#34;:&#34;C7H7NO:0&#34;,
+  &#34;acetanilide&#34;:&#34;C8H9NO:0&#34;,&#34;n-phenylacetamide&#34;:&#34;C8H9NO:0&#34;,
+  &#34;urea&#34;:&#34;CH4N2O:0&#34;,&#34;carbamide&#34;:&#34;CH4N2O:0&#34;,
+  &#34;acetonitrile&#34;:&#34;C2H3N:0&#34;,&#34;methyl cyanide&#34;:&#34;C2H3N:0&#34;,&#34;benzonitrile&#34;:&#34;C7H5N:0&#34;,
+  &#34;methylamine&#34;:&#34;CH5N:0&#34;,&#34;ethylamine&#34;:&#34;C2H7N:0&#34;,
+  &#34;pyrrole&#34;:&#34;C4H5N:0&#34;,&#34;furan&#34;:&#34;C4H4O:0&#34;,&#34;thiophene&#34;:&#34;C4H4S:0&#34;,
+  &#34;pyridine&#34;:&#34;C5H5N:0&#34;,&#34;imidazole&#34;:&#34;C3H4N2:0&#34;,&#34;indole&#34;:&#34;C8H7N:0&#34;,&#34;quinoline&#34;:&#34;C9H7N:0&#34;,
+  &#34;furfural&#34;:&#34;C5H4O2:0&#34;,&#34;furfuraldehyde&#34;:&#34;C5H4O2:0&#34;,
+  &#34;paracetamol&#34;:&#34;C8H9NO2:0&#34;,&#34;acetaminophen&#34;:&#34;C8H9NO2:0&#34;,&#34;tylenol&#34;:&#34;C8H9NO2:0&#34;,
+  &#34;vitamin c&#34;:&#34;C6H8O6:0&#34;,&#34;ascorbic acid&#34;:&#34;C6H8O6:0&#34;,
+  &#34;glucose&#34;:&#34;C6H12O6:0&#34;,&#34;dextrose&#34;:&#34;C6H12O6:0&#34;,&#34;blood sugar&#34;:&#34;C6H12O6:0&#34;,
+  &#34;fructose&#34;:&#34;C6H12O6:1&#34;,&#34;fruit sugar&#34;:&#34;C6H12O6:1&#34;,
+  &#34;sucrose&#34;:&#34;C12H22O11:0&#34;,&#34;table sugar&#34;:&#34;C12H22O11:0&#34;,
+  &#34;lactose&#34;:&#34;C12H22O11:1&#34;,&#34;milk sugar&#34;:&#34;C12H22O11:1&#34;,
+  &#34;ethylene glycol&#34;:&#34;C2H6O2:0&#34;,&#34;glycerol&#34;:&#34;C3H8O3:0&#34;,&#34;glycerin&#34;:&#34;C3H8O3:0&#34;,
+  &#34;catechol&#34;:&#34;C6H6O2:0&#34;,&#34;resorcinol&#34;:&#34;C6H6O2:1&#34;,&#34;hydroquinone&#34;:&#34;C6H6O2:2&#34;,
+  &#34;phthalic acid&#34;:&#34;C8H6O4:0&#34;,&#34;isophthalic acid&#34;:&#34;C8H6O4:1&#34;,&#34;terephthalic acid&#34;:&#34;C8H6O4:2&#34;,
+  &#34;phenylalanine&#34;:&#34;C9H11NO2:0&#34;,&#34;phe&#34;:&#34;C9H11NO2:0&#34;,&#34;glycine&#34;:&#34;C2H5NO2:0&#34;,
+  &#34;caffeine&#34;:&#34;C8H10N4O2:0&#34;,&#34;chalcone&#34;:&#34;C15H12O:0&#34;,&#34;benzalacetone&#34;:&#34;C10H10O:0&#34;,
+  &#34;maleic acid&#34;:&#34;C4H4O4:0&#34;,&#34;fumaric acid&#34;:&#34;C4H4O4:1&#34;,
+  &#34;adipic acid&#34;:&#34;C6H10O4:0&#34;,&#34;nylon acid&#34;:&#34;C6H10O4:0&#34;,
+  &#34;salicylaldehyde&#34;:&#34;C7H6O2:1&#34;,&#34;catechol&#34;:&#34;C6H6O2:0&#34;
+};
+
+function lookupByRef(ref){
+  var parts=ref.split(&#39;:&#39;),hill=parts[0],idx=parseInt(parts[1])||0;
+  var arr=COMPOUND_DB[hill];
+  if(!arr)return null;
+  return arr[Math.min(idx,arr.length-1)]||null;
+}
+
+/* ── REACTIONS DB ───────────────────────────────────────── */
+var REACTIONS_DB = {
+  &#34;C9H8O&#34;:[&#34;C₆H₅-CH=CH-CHO + H₂/Ni → C₆H₅-CH₂-CH₂-CH₂OH (full hydrogenation)&#34;,
+    &#34;C₆H₅-CH=CH-CHO + NaBH₄ → C₆H₅-CH=CH-CH₂OH (selective C=O reduction)&#34;,
+    &#34;C₆H₅-CH=CH-CHO + Ag(NH₃)₂⁺ → C₆H₅-CH=CH-COOH (Tollens&#39; — positive)&#34;,
+    &#34;C₆H₅-CH=CH-CHO + Br₂/CCl₄ → C₆H₅-CHBr-CHBr-CHO (addition to C=C)&#34;],
+  &#34;C3H6O&#34;:[&#34;CH₃-CO-CH₃ + NaBH₄ → (CH₃)₂CHOH (isopropanol — reduction)&#34;,
+    &#34;CH₃-CO-CH₃ + I₂/NaOH → CHI₃↓ + CH₃COONa (iodoform test — positive for methyl ketone)&#34;,
+    &#34;CH₃-CO-CH₃ + NH₂NH₂/KOH/Δ → CH₃-CH₂-CH₃ (Wolff-Kishner reduction)&#34;,
+    &#34;CH₃-CO-CH₃ + Conc. H₂SO₄ → mesitylene (acid-catalyzed trimerization)&#34;],
+  &#34;C6H6&#34;:[&#34;C₆H₆ + HNO₃/H₂SO₄ → C₆H₅NO₂ (nitration — EAS)&#34;,
+    &#34;C₆H₆ + Br₂/FeBr₃ → C₆H₅Br + HBr (bromination — EAS)&#34;,
+    &#34;C₆H₆ + CH₃Cl/AlCl₃ → C₆H₅CH₃ (Friedel-Crafts alkylation)&#34;,
+    &#34;C₆H₆ + 3H₂/Ni/Δ → C₆H₁₂ (hydrogenation to cyclohexane)&#34;],
+  &#34;C7H6O&#34;:[&#34;C₆H₅CHO + NaOH(50%) → C₆H₅CH₂OH + C₆H₅COONa (Cannizzaro reaction)&#34;,
+    &#34;C₆H₅CHO + KCN/EtOH → benzoin (benzoin condensation)&#34;,
+    &#34;C₆H₅CHO + CH₃CO₂Na/Ac₂O → C₆H₅-CH=CH-COOH (Perkin reaction)&#34;,
+    &#34;C₆H₅CHO + Ag(NH₃)₂⁺ → C₆H₅COONa (Tollens&#39; silver mirror — positive)&#34;],
+  &#34;C8H8O&#34;:[&#34;C₆H₅COCH₃ + I₂/NaOH → C₆H₅COONa + CHI₃↓ (iodoform — positive)&#34;,
+    &#34;C₆H₅COCH₃ + NaBH₄ → C₆H₅-CHOH-CH₃&#34;,
+    &#34;C₆H₅COCH₃ + Zn(Hg)/HCl → C₆H₅-CH₂-CH₃ (Clemmensen reduction)&#34;],
+  &#34;C6H6O&#34;:[&#34;C₆H₅OH + NaOH → C₆H₅ONa + H₂O (sodium phenoxide)&#34;,
+    &#34;C₆H₅OH + Br₂/H₂O → 2,4,6-Br₃-C₆H₂OH (tribromination — white ppt)&#34;,
+    &#34;C₆H₅OH + CHCl₃/NaOH → 2-HOC₆H₄-CHO (Reimer-Tiemann)&#34;,
+    &#34;C₆H₅OH + CO₂/NaOH/Δ → salicylate (Kolbe-Schmitt carboxylation)&#34;],
+  &#34;C7H6O2&#34;:[&#34;C₆H₅COOH + NaHCO₃ → C₆H₅COONa + CO₂↑ (acid stronger than H₂CO₃)&#34;,
+    &#34;C₆H₅COOH + PCl₅ → C₆H₅COCl + POCl₃ + HCl (acid chloride formation)&#34;,
+    &#34;C₆H₅COOH + NaOH/CaO/Δ → C₆H₆ + Na₂CO₃ (decarboxylation)&#34;,
+    &#34;C₆H₅COOH + C₂H₅OH/H⁺ → C₆H₅COOC₂H₅ (esterification)&#34;],
+  &#34;C6H7N&#34;:[&#34;C₆H₅NH₂ + NaNO₂/HCl/0°C → C₆H₅N₂⁺Cl⁻ (diazotization)&#34;,
+    &#34;C₆H₅NH₂ + Br₂/H₂O → 2,4,6-Br₃-C₆H₂NH₂↓ (tribromination)&#34;,
+    &#34;C₆H₅NH₂ + CH₃COCl → C₆H₅NHCOCH₃ + HCl (acetylation)&#34;],
+  &#34;C2H4O&#34;:[&#34;CH₃CHO + Ag(NH₃)₂⁺ → CH₃COONa + Ag↓ (Tollens&#39; — positive)&#34;,
+    &#34;CH₃CHO + Fehling&#39;s → Cu₂O↓ (red precipitate — positive)&#34;,
+    &#34;CH₃CHO + NaOH/I₂ → CHI₃↓ + HCOONa (iodoform — positive)&#34;],
+  &#34;C2H4O2&#34;:[&#34;CH₃COOH + NaOH → CH₃COONa + H₂O (neutralization)&#34;,
+    &#34;CH₃COOH + C₂H₅OH/H⁺ → CH₃COOC₂H₅ + H₂O (esterification)&#34;,
+    &#34;CH₃COOH + PCl₃ → CH₃COCl (acetyl chloride)&#34;],
+  &#34;CH2O&#34;:[&#34;HCHO + Ag(NH₃)₂⁺ → HCOONH₄ + Ag↓ (Tollens&#39; — positive)&#34;,
+    &#34;HCHO + NaOH → HCOOH + CH₃OH (Cannizzaro — no α-H)&#34;,
+    &#34;HCHO + NH₃ → hexamethylenetetramine&#34;],
+  &#34;C6H12O6&#34;:[&#34;Glucose + Ag(NH₃)₂⁺ → gluconate + Ag↓ (Tollens&#39; — positive)&#34;,
+    &#34;Glucose + Fehling&#39;s → Cu₂O↓ (reducing sugar — positive)&#34;,
+    &#34;Glucose + H₂/Ni → sorbitol (reduction)&#34;],
+  &#34;C4H8O&#34;:[&#34;CH₃CH₂CH₂CHO + Ag(NH₃)₂⁺ → butanoic acid (Tollens&#39; — positive)&#34;,
+    &#34;CH₃CO-CH₂CH₃ + NaBH₄ → butan-2-ol (reduction)&#34;,
+    &#34;CH₃CO-CH₂CH₃ + I₂/NaOH → CHI₃↓ (iodoform — positive)&#34;],
+  &#34;C5H10O&#34;:[&#34;CH₃CH₂CH₂CH₂CHO + Ag(NH₃)₂⁺ → pentanoic acid (Tollens&#39; — positive)&#34;,
+    &#34;Pentan-2-one + I₂/NaOH → CHI₃↓ (iodoform — positive for CH₃CO-)&#34;,
+    &#34;Pent-2-en-1-ol: unsaturated alcohol — undergoes both alkene and alcohol reactions&#34;,
+    &#34;Pent-2-en-1-ol + Br₂ → dibromide (addition to C=C)&#34;,
+    &#34;Pent-2-en-1-ol + Na → H₂↑ (alcohol reacts with Na)&#34;]
+};
+
+/* ── FUNCTIONAL GROUP PREDICTOR ──────────────────────────── */
+function predictFGs(a,dbe){
+  var C=a.C||0,H=a.H||0,O=a.O||0,N=a.N||0,S=a.S||0;
+  var X=(a.F||0)+(a.Cl||0)+(a.Br||0)+(a.I||0);
+  var groups=[],notes=[];
+  if(!C){groups.push(&#39;Inorganic compound&#39;);return{groups:groups,notes:notes};}
+  if(a.F&amp;&amp;a.F&gt;0)groups.push(&#39;Organofluorine (C–F)&#39;);
+  if(a.Cl&amp;&amp;a.Cl&gt;0)groups.push(&#39;Organochlorine (C–Cl)×&#39;+a.Cl);
+  if(a.Br&amp;&amp;a.Br&gt;0)groups.push(&#39;Organobromine (C–Br)×&#39;+a.Br);
+  if(a.I&amp;&amp;a.I&gt;0)groups.push(&#39;Organoiodine (C–I)×&#39;+a.I);
+  if(!O&amp;&amp;!N&amp;&amp;!S&amp;&amp;!X){
+    if(dbe===0)groups.push(&#39;Alkane (CₙH₂ₙ₊₂)&#39;);
+    else if(dbe===1)groups.push(&#39;Alkene (C=C) or Cycloalkane&#39;);
+    else if(dbe===2)groups.push(&#39;Alkyne (C≡C), Diene, or Cycloalkene&#39;);
+    else if(dbe===3)groups.push(&#39;Triene, Diyne, or Cycloalkyne&#39;);
+    else if(dbe&gt;=4)groups.push(&#39;Aromatic hydrocarbon&#39;);
+    return{groups:groups,notes:notes};
+  }
+  if(O&gt;=1){
+    if(O===1&amp;&amp;dbe===0){groups.push(&#39;Alcohol (–OH) or Ether (–O–)&#39;);notes.push(&#39;CₙH₂ₙ₊₂O: alcohol or ether isomers&#39;);}
+    else if(O===1&amp;&amp;dbe===1){groups.push(&#39;Aldehyde (–CHO) or Ketone (C=O) or Alkenol&#39;);notes.push(&#39;Check structural formula: ketone=C-CO-C, aldehyde=terminal -CHO, alkenol=C=C + OH&#39;);}
+    else if(O===1&amp;&amp;dbe===2)groups.push(&#39;α,β-Unsaturated carbonyl or Unsaturated alcohol&#39;);
+    else if(O===1&amp;&amp;dbe&gt;=4)groups.push(&#39;Aromatic ketone or aldehyde&#39;);
+    else if(O===2&amp;&amp;dbe===1){groups.push(&#39;Carboxylic acid (–COOH) or Ester (–COO–)&#39;);notes.push(&#39;CₙH₂ₙO₂: acid reacts with NaHCO₃; ester does not&#39;);}
+    else if(O&gt;=3)groups.push(&#39;Polyol, Carbohydrate, or Polyester&#39;);
+  }
+  if(N&gt;=1){
+    if(O===0){
+      if(H===2*C+3)groups.push(&#39;Primary amine (–NH₂)&#39;);
+      else if(H===2*C-1)groups.push(&#39;Nitrile (–C≡N)&#39;);
+      else if(dbe&gt;=4)groups.push(&#39;Aromatic amine or N-heterocycle&#39;);
+      else groups.push(&#39;Amine, imine, or nitrile&#39;);
+    }
+    if(O===1)groups.push(&#39;Amide (–CONH₂) or amino alcohol&#39;);
+    if(O===2)groups.push(&#39;Nitro compound (–NO₂) or amino acid&#39;);
+    if(N&gt;=2)notes.push(&#39;Multiple nitrogen: diamine, pyrimidine, purine, or diazene&#39;);
+  }
+  if(S&gt;=1){groups.push(&#39;Thiol (–SH), sulfide (–S–), or sulfoxide&#39;);if(O&gt;=1)notes.push(&#39;Sulfonate or sulfonamide possible&#39;);}
+  if(dbe&gt;=4&amp;&amp;C&gt;=6){notes.push(&#39;Aromatic ring: DBE≥4, C≥6&#39;);if(O&gt;=1)notes.push(&#39;Aromatic + O substituent&#39;);}
+  return{groups:[...new Set(groups)],notes:[...new Set(notes)]};
+}
+
+/* ── CCE: Chemistry Classification Engine ──────────────── */
+function cceClassify(hill,a,dbe){
+  var C=a.C||0,H=a.H||0,O=a.O||0,N=a.N||0;
+  var X=(a.F||0)+(a.Cl||0)+(a.Br||0)+(a.I||0);
+  if(!C)return null;
+  if(!O&amp;&amp;!N&amp;&amp;!X){
+    if(H===2*C+2)return{name:&#39;n-&#39;+cap(C)+&#39;ane&#39;,iupac:pref(C)+&#39;ane&#39;,struct:&#39;CH₃-(CH₂)&#39;+Math.max(0,C-2)+&#39;-CH₃&#39;,cls:&#39;Alkane&#39;};
+    if(H===2*C)return{name:&#39;1-&#39;+cap(C)+&#39;ene&#39;,iupac:pref(C)+&#39;-1-ene&#39;,struct:&#39;CH₂=CH-(CH₂)&#39;+Math.max(0,C-2)+&#39;-CH₃&#39;,cls:&#39;Alkene / Cycloalkane&#39;};
+    if(H===2*C-2)return{name:&#39;1-&#39;+cap(C)+&#39;yne&#39;,iupac:pref(C)+&#39;-1-yne&#39;,struct:&#39;HC≡C-(CH₂)&#39;+Math.max(0,C-2)+&#39;-CH₃&#39;,cls:&#39;Alkyne / Cycloalkene&#39;};
+  }
+  if(O===1&amp;&amp;!N&amp;&amp;!X){
+    if(H===2*C+2)return{name:&#39;1-&#39;+cap(C)+&#39;anol&#39;,iupac:pref(C)+&#39;an-1-ol&#39;,struct:&#39;CH₃-(CH₂)&#39;+Math.max(0,C-2)+&#39;-CH₂-OH&#39;,cls:&#39;Alcohol&#39;};
+    if(H===2*C){
+      var ald={1:&#39;Formaldehyde&#39;,2:&#39;Acetaldehyde&#39;,3:&#39;Propanal&#39;,4:&#39;Butanal&#39;,5:&#39;Pentanal&#39;,6:&#39;Hexanal&#39;,7:&#39;Heptanal&#39;};
+      var aldu={1:&#39;methanal&#39;,2:&#39;ethanal&#39;,3:&#39;propanal&#39;,4:&#39;butanal&#39;,5:&#39;pentanal&#39;,6:&#39;hexanal&#39;,7:&#39;heptanal&#39;};
+      return{name:(ald[C]||cap(C)+&#39;anal&#39;),iupac:(aldu[C]||pref(C)+&#39;anal&#39;),struct:&#39;CH₃-(CH₂)&#39;+Math.max(0,C-2)+&#39;-CHO&#39;,cls:&#39;Aldehyde (or Ketone isomer)&#39;};
+    }
+  }
+  if(O===2&amp;&amp;!N&amp;&amp;!X){
+    if(H===2*C)return{name:cap(C)+&#39;anoic acid&#39;,iupac:pref(C)+&#39;anoic acid&#39;,struct:&#39;CH₃-(CH₂)&#39;+Math.max(0,C-2)+&#39;-COOH&#39;,cls:&#39;Carboxylic acid&#39;};
+  }
+  if(N===1&amp;&amp;!O&amp;&amp;!X){
+    if(H===2*C+3)return{name:cap(C)+&#39;ylamine&#39;,iupac:pref(C)+&#39;an-1-amine&#39;,struct:&#39;CH₃-(CH₂)&#39;+Math.max(0,C-2)+&#39;-NH₂&#39;,cls:&#39;Primary amine&#39;};
+  }
+  return null;
+}
+
+/* ── MAIN RESOLVER ─────────────────────────────────────── */
+function resolveFormula(input){
+  if(!input||!input.trim())return null;
+  var raw=input.trim(),lo=raw.toLowerCase();
+  var formula=&#39;&#39;,atoms={},inputType=&#39;&#39;,matchedEntry=null,isStructural=false;
+
+  /* 1. Name lookup */
+  var nameRef=NAME_INDEX[lo]||NAME_INDEX[lo.replace(/\s+/g,&#39; &#39;)];
+  if(nameRef){matchedEntry=lookupByRef(nameRef);if(matchedEntry){formula=matchedEntry.hill;atoms=parseAtoms(formula);inputType=&#39;Compound name&#39;;}}
+
+  /* 2. Partial name match */
+  if(!formula&amp;&amp;lo.length&gt;3){
+    for(var k in NAME_INDEX){
+      if(k.length&gt;3&amp;&amp;(k.startsWith(lo)||lo.startsWith(k))){
+        var me=lookupByRef(NAME_INDEX[k]);
+        if(me){matchedEntry=me;formula=me.hill;atoms=parseAtoms(formula);inputType=&#39;Partial match: &#34;&#39;+k+&#39;&#34;&#39;;break;}
+      }
+    }
+  }
+
+  /* 3. Structural formula */
+  if(!formula&amp;&amp;/[-=≡#]/.test(raw)){
+    isStructural=true;atoms=parseAtoms(raw);formula=hillFormula(atoms);inputType=&#39;Structural formula&#39;;
+    /* KEY FIX: classify from structural info before falling back to DB */
+    var sInfo=classifyStructural(raw);
+    if(sInfo){
+      if(sInfo.isKetone&amp;&amp;COMPOUND_DB[formula]){
+        var ke=null;for(var i=0;i&lt;COMPOUND_DB[formula].length;i++){if(COMPOUND_DB[formula][i].cls===&#39;Ketone&#39;){ke=COMPOUND_DB[formula][i];break;}}
+        if(ke)matchedEntry=ke;
+      } else if(sInfo.isAldehyde&amp;&amp;COMPOUND_DB[formula]){
+        var al=null;for(var i=0;i&lt;COMPOUND_DB[formula].length;i++){if(COMPOUND_DB[formula][i].cls===&#39;Aldehyde&#39;){al=COMPOUND_DB[formula][i];break;}}
+        if(al)matchedEntry=al;
+      } else if(sInfo.isAlkenol&amp;&amp;COMPOUND_DB[formula]){
+        var alk=null;for(var i=0;i&lt;COMPOUND_DB[formula].length;i++){if(COMPOUND_DB[formula][i].cls===&#39;Alkenol&#39;){alk=COMPOUND_DB[formula][i];break;}}
+        if(alk)matchedEntry=alk;
+        if(!alk){
+          /* Build IUPAC name from structural: count C and find bond positions */
+          var dbSegments=raw.split(/[-]/),dbPos=0,totC=0,firstDBpos=0,ohPos=0;
+          for(var i=0;i&lt;dbSegments.length-1;i++){
+            var seg=dbSegments[i];var cC=(seg.match(/C/g)||[]).length;totC+=cC;
+            if(/OH/.test(seg))ohPos=totC;
+          }
+          totC+=((dbSegments[dbSegments.length-1].match(/C/g)||[]).length);
+          if(/OH/.test(dbSegments[dbSegments.length-1]))ohPos=totC;
+          var p=pref(totC||5),cp=cap(totC||5);
+          matchedEntry={name:cp+&#39;en-ol (alkenol)&#39;,iupac:p+&#39;-en-ol&#39;,struct:raw,hill:formula,cls:&#39;Alkenol&#39;};
+        }
+      }
+    }
+    if(!matchedEntry&amp;&amp;COMPOUND_DB[formula])matchedEntry=COMPOUND_DB[formula][0];
+  }
+
+  /* 4. Molecular formula */
+  if(!formula){
+    var clean=raw.replace(/\s/g,&#39;&#39;).replace(/[₀₁₂₃₄₅₆₇₈₉]/g,function(c){return&#39;0123456789&#39;.charAt(&#39;₀₁₂₃₄₅₆₇₈₉&#39;.indexOf(c));});
+    if(/^[A-Z]/.test(clean)){atoms=parseAtoms(clean);if(Object.keys(atoms).length&gt;0){formula=hillFormula(atoms);inputType=&#39;Molecular formula&#39;;}}
+  }
+  if(!formula||Object.keys(atoms).length===0)return null;
+
+  var dbeInfo=calcDBE(atoms),dbe=dbeInfo.dbe;
+  var mw=calcMW(atoms);
+  var arInfo=detectAromaticity(dbe,atoms);
+  var fgInfo=predictFGs(atoms,dbe);
+
+  if(!matchedEntry&amp;&amp;COMPOUND_DB[formula])matchedEntry=COMPOUND_DB[formula][0];
+
+  var mainResult=null;
+  if(matchedEntry){
+    mainResult={name:matchedEntry.name,iupac:matchedEntry.iupac,struct:matchedEntry.struct,
+      hill:formula,dbe:dbe,mw:mw,cls:matchedEntry.cls,reactions:REACTIONS_DB[formula]||[]};
+  } else {
+    var cce=cceClassify(formula,atoms,dbe);
+    if(cce){mainResult={name:cce.name,iupac:cce.iupac,struct:cce.struct,hill:formula,dbe:dbe,mw:mw,cls:cce.cls,reactions:REACTIONS_DB[formula]||[]};}
+    else{mainResult={name:formula,iupac:formula,struct:formula,hill:formula,dbe:dbe,mw:mw,cls:&#39;Unknown&#39;,reactions:[]};}
+  }
+
+  return{
+    inputType:inputType,original:raw,formula:formula,atoms:atoms,
+    dbe:dbe,dbeShow:dbeInfo.show,mw:mw,
+    aromatic:arInfo.aromatic,aromaticDetails:arInfo.details,
+    functionalGroups:fgInfo.groups,fgNotes:fgInfo.notes,
+    mainResult:mainResult,allIsomers:COMPOUND_DB[formula]||[],
+    reactions:REACTIONS_DB[formula]||[],
+    confidence:matchedEntry?&#39;high&#39;:(COMPOUND_DB[formula]&amp;&amp;COMPOUND_DB[formula].length&gt;0?&#39;med&#39;:&#39;low&#39;)
+  };
+}
+
+/* ══════════════════════════════════════════════════════════
+   UI / RENDERING
+══════════════════════════════════════════════════════════ */
+var currentResult=null,selectedIso=null;
+
+var EXAMPLES=[&#39;CH3-CO-CH3&#39;,&#39;CH3-CH2-CH=CH-CH2-OH&#39;,&#39;C9H8O&#39;,&#39;cinnamaldehyde&#39;,
+  &#39;C6H5-CH=CH-CHO&#39;,&#39;C3H6O&#39;,&#39;acetone&#39;,&#39;pent-2-ene&#39;,&#39;C6H6&#39;,&#39;benzaldehyde&#39;];
+
+/* Render examples */
+(function(){
+  var wrap=document.getElementById(&#39;examples-row&#39;);
+  EXAMPLES.forEach(function(ex){
+    var btn=document.createElement(&#39;button&#39;);btn.className=&#39;ex-chip&#39;;btn.textContent=ex;
+    btn.onclick=function(){document.getElementById(&#39;main-input&#39;).value=ex;doResolve();};
+    wrap.appendChild(btn);
+  });
+})();
+
+/* Render reference grid */
+(function(){
+  var classes=[
+    {cls:&#39;Alkane&#39;,rule:&#39;CₙH₂ₙ₊₂ (DBE=0)&#39;,ex:&#39;C₃H₈ → Propane&#39;},
+    {cls:&#39;Alkene&#39;,rule:&#39;CₙH₂ₙ (DBE=1, C=C)&#39;,ex:&#39;C₃H₆ → Propene&#39;},
+    {cls:&#39;Alkyne&#39;,rule:&#39;CₙH₂ₙ₋₂ (DBE=2, C≡C)&#39;,ex:&#39;C₂H₂ → Acetylene&#39;},
+    {cls:&#39;Diene&#39;,rule:&#39;CₙH₂ₙ₋₂ (DBE=2, 2×C=C)&#39;,ex:&#39;C₄H₆ → 1,3-Butadiene&#39;},
+    {cls:&#39;Cycloalkane&#39;,rule:&#39;CₙH₂ₙ (DBE=1, ring)&#39;,ex:&#39;C₆H₁₂ → Cyclohexane&#39;},
+    {cls:&#39;Cycloalkene&#39;,rule:&#39;CₙH₂ₙ₋₂ (ring+C=C)&#39;,ex:&#39;C₆H₁₀ → Cyclohexene&#39;},
+    {cls:&#39;Alcohol&#39;,rule:&#39;CₙH₂ₙ₊₂O (DBE=0, –OH)&#39;,ex:&#39;C₂H₆O → Ethanol&#39;},
+    {cls:&#39;Ether&#39;,rule:&#39;CₙH₂ₙ₊₂O (DBE=0, –O–)&#39;,ex:&#39;C₂H₆O → Dimethyl ether&#39;},
+    {cls:&#39;Aldehyde&#39;,rule:&#39;CₙH₂ₙO (–CHO terminal)&#39;,ex:&#39;C₃H₆O → Propanal&#39;},
+    {cls:&#39;Ketone&#39;,rule:&#39;CₙH₂ₙO (–CO– internal)&#39;,ex:&#39;C₃H₆O → Acetone&#39;},
+    {cls:&#39;Alkenol&#39;,rule:&#39;CₙH₂ₙO (C=C + –OH)&#39;,ex:&#39;C₅H₁₀O → Pent-2-en-1-ol&#39;},
+    {cls:&#39;Carboxylic acid&#39;,rule:&#39;CₙH₂ₙO₂ (–COOH)&#39;,ex:&#39;C₂H₄O₂ → Acetic acid&#39;},
+    {cls:&#39;Ester&#39;,rule:&#39;CₙH₂ₙO₂ (–COO–)&#39;,ex:&#39;C₃H₆O₂ → Methyl acetate&#39;},
+    {cls:&#39;Primary amine&#39;,rule:&#39;CₙH₂ₙ₊₃N (–NH₂)&#39;,ex:&#39;C₂H₇N → Ethylamine&#39;},
+    {cls:&#39;Nitrile&#39;,rule:&#39;CₙH₂ₙ₋₁N (–C≡N)&#39;,ex:&#39;C₂H₃N → Acetonitrile&#39;},
+    {cls:&#39;Amide&#39;,rule:&#39;CₙH₂ₙ₊₁NO (–CONH₂)&#39;,ex:&#39;C₂H₅NO → Acetamide&#39;},
+    {cls:&#39;Nitro compound&#39;,rule:&#39;CₙH₂ₙ₊₁NO₂ (–NO₂)&#39;,ex:&#39;C₆H₅NO₂ → Nitrobenzene&#39;},
+    {cls:&#39;Aromatic&#39;,rule:&#39;DBE≥4, C≥6&#39;,ex:&#39;C₆H₆ → Benzene (DBE=4)&#39;}
+  ];
+  var wrap=document.getElementById(&#39;ref-grid&#39;);
+  classes.forEach(function(c){
+    wrap.innerHTML+=&#39;&lt;div class=&#34;ref-card&#34;&gt;&lt;div class=&#34;ref-cls&#34;&gt;&#39;+safeHtml(c.cls)+&#39;&lt;/div&gt;&lt;div class=&#34;ref-rule&#34;&gt;&#39;+safeHtml(c.rule)+&#39;&lt;/div&gt;&lt;div class=&#34;ref-ex&#34;&gt;&#39;+safeHtml(c.ex)+&#39;&lt;/div&gt;&lt;/div&gt;&#39;;
+  });
+})();
+
+/* Render how-to */
+(function(){
+  var steps=[
+    {n:&#39;1&#39;,title:&#39;Molecular Formula&#39;,ex:&#39;C3H6O → DBE=1, O=1 → lists all isomers:\nAcetone (ketone) · Propanal (aldehyde) · Allyl alcohol (alkenol)\n→ Select the isomer matching your structure&#39;},
+    {n:&#39;2&#39;,title:&#39;Structural Formula — Ketone vs Aldehyde (Fixed)&#39;,ex:&#39;CH3-CO-CH3 → detected as ketone (-CO- between carbons) → Acetone (propan-2-one) ✓\nCH3-CH2-CHO → detected as aldehyde (-CHO terminal) → Propanal ✓&#39;},
+    {n:&#39;3&#39;,title:&#39;Unsaturated Alcohol (Alkenol) — Fixed&#39;,ex:&#39;CH3-CH2-CH=CH-CH2-OH → detected as alkenol → pent-2-en-1-ol ✓\nNot &#34;n-Valeraldehyde&#34; — the OH group is detected correctly&#39;},
+    {n:&#39;4&#39;,title:&#39;Compound Name&#39;,ex:&#39;cinnamaldehyde → C9H8O → (E)-3-phenylprop-2-enal\nacetone → C3H6O → propan-2-one\npent-2-en-1-ol → selected from C5H10O isomers&#39;},
+    {n:&#39;5&#39;,title:&#39;Multiple Double Bonds (Dienes)&#39;,ex:&#39;1,3-butadiene → C4H6 → buta-1,3-diene (DBE=2, two C=C)\nisoprene → C5H8 → 2-methylbuta-1,3-diene (diene class)&#39;}
+  ];
+  var wrap=document.getElementById(&#39;howto&#39;);
+  steps.forEach(function(s){
+    wrap.innerHTML+=&#39;&lt;div style=&#34;display:flex;gap:14px;margin-bottom:16px&#34;&gt;&#39;
+      +&#39;&lt;div style=&#34;width:36px;height:36px;flex-shrink:0;background:linear-gradient(135deg,rgba(0,242,255,.15),rgba(168,85,247,.15));border:1px solid rgba(0,242,255,.3);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:\&#39;Orbitron\&#39;,sans-serif;font-size:.75rem;font-weight:700;color:#00f2ff&#34;&gt;&#39;+s.n+&#39;&lt;/div&gt;&#39;
+      +&#39;&lt;div&gt;&lt;div style=&#34;font-weight:600;color:#e2e8f0;font-size:.85rem;margin-bottom:6px&#34;&gt;&#39;+safeHtml(s.title)+&#39;&lt;/div&gt;&#39;
+      +&#39;&lt;pre style=&#34;background:rgba(0,0,0,.3);border:1px solid rgba(0,242,255,.1);border-radius:10px;padding:10px 12px;font-size:.73rem;color:#94a3b8;font-family:monospace;white-space:pre-wrap&#34;&gt;&#39;+safeHtml(s.ex)+&#39;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&#39;;
+  });
+})();
+
+/* Accordion helper */
+function makeAccordion(title,contentHtml,openDefault){
+  var id=&#39;acc-&#39;+Math.random().toString(36).slice(2);
+  var oc=openDefault?&#39; open&#39;:&#39;&#39;;
+  return &#39;&lt;div class=&#34;acc&#34;&gt;&#39;
+    +&#39;&lt;button class=&#34;acc-btn&#39;+oc+&#39;&#34; onclick=&#34;toggleAcc(\&#39;&#39;+id+&#39;\&#39;)&#34;&gt;&#39;
+    +&#39;&lt;span&gt;&#39;+safeHtml(title)+&#39;&lt;/span&gt;&lt;span class=&#34;acc-arrow&#34;&gt;&amp;#9660;&lt;/span&gt;&lt;/button&gt;&#39;
+    +&#39;&lt;div class=&#34;acc-body&#39;+oc+&#39;&#34; id=&#34;&#39;+id+&#39;&#34;&gt;&#39;+contentHtml+&#39;&lt;/div&gt;&lt;/div&gt;&#39;;
+}
+function toggleAcc(id){
+  var body=document.getElementById(id);if(!body)return;
+  var btn=body.previousElementSibling;
+  body.classList.toggle(&#39;open&#39;);btn.classList.toggle(&#39;open&#39;);
+}
+
+function dataRow(label,val){
+  return &#39;&lt;div class=&#34;data-row&#34;&gt;&lt;span class=&#34;data-lbl&#34;&gt;&#39;+safeHtml(label)+&#39;&lt;/span&gt;&lt;span class=&#34;data-val&#34;&gt;&#39;+safeHtml(String(val))+&#39;&lt;/span&gt;&lt;/div&gt;&#39;;
+}
+
+/* Main render */
+function doResolve(){
+  var inp=document.getElementById(&#39;main-input&#39;).value.trim();
+  if(!inp)return;
+  selectedIso=null;
+  currentResult=resolveFormula(inp);
+  renderResult();
+}
+
+function renderResult(){
+  var out=document.getElementById(&#39;rfr-out&#39;);
+  var idle=document.getElementById(&#39;rfr-idle&#39;);
+  idle.style.display=&#39;none&#39;;
+  out.style.display=&#39;block&#39;;
+
+  if(!currentResult){
+    out.innerHTML=&#39;&lt;div class=&#34;error-box&#34;&gt;&lt;div class=&#34;err-icon&#34;&gt;⚠&lt;/div&gt;Cannot interpret that input.&lt;br&gt;&lt;small style=&#34;color:#94a3b8&#34;&gt;Try: CH3-CO-CH3 · C9H8O · cinnamaldehyde · pent-2-en-1-ol · C5H10&lt;/small&gt;&lt;/div&gt;&#39;;
+    return;
+  }
+
+  var r=currentResult;
+  var main=selectedIso?{
+    name:selectedIso.name,iupac:selectedIso.iupac,struct:selectedIso.struct,cls:selectedIso.cls,
+    reactions:REACTIONS_DB[selectedIso.hill]||r.mainResult.reactions
+  }:r.mainResult;
+
+  var confCls=r.confidence===&#39;high&#39;?&#39;conf-high&#39;:(r.confidence===&#39;med&#39;?&#39;conf-med&#39;:&#39;conf-low&#39;);
+  var confLbl=r.confidence===&#39;high&#39;?&#39;HIGH CONFIDENCE&#39;:(r.confidence===&#39;med&#39;?&#39;MEDIUM&#39;:&#39;LOW&#39;);
+
+  var dbeLabels={0:&#39;Saturated — no rings or π bonds&#39;,1:&#39;One degree: ring or C=C or C=O&#39;,
+    2:&#39;Two degrees: diene/alkyne/ring+bond&#39;,3:&#39;Three degrees: triene/diyne/bicyclic&#39;,
+    4:&#39;Benzene ring (4 degrees of unsaturation)&#39;,5:&#39;Benzene + 1 extra π bond&#39;,
+    6:&#39;Benzene + 2 extra π bonds&#39;,7:&#39;Fused bicyclic&#39;};
+  var dbeLabel=dbeLabels[r.dbe]||(r.dbe+&#39; degrees — polycyclic/complex&#39;);
+
+  /* Isomer panel */
+  var isoHtml=&#39;&#39;;
+  if(r.allIsomers.length&gt;1){
+    var cards=&#39;&#39;;
+    r.allIsomers.forEach(function(iso,i){
+      var isAct=selectedIso?selectedIso.name===iso.name:(!selectedIso&amp;&amp;(r.mainResult.name===iso.name||i===0));
+      cards+=&#39;&lt;button class=&#34;iso-card&#39;+(isAct?&#39; active&#39;:&#39;&#39;)+&#39;\&#34; onclick=&#34;pickIso(&#39;+i+&#39;)&#34;&gt;&#39;
+        +&#39;&lt;div class=&#34;iso-card-name&#34;&gt;&#39;+safeHtml(iso.name)+&#39;&lt;/div&gt;&#39;
+        +&#39;&lt;div class=&#34;iso-card-iupac&#34;&gt;&#39;+safeHtml(iso.iupac)+&#39;&lt;/div&gt;&#39;
+        +&#39;&lt;div class=&#34;iso-card-struct&#34;&gt;&#39;+safeHtml(iso.struct)+&#39;&lt;/div&gt;&#39;
+        +&#39;&lt;span class=&#34;iso-card-class&#34;&gt;&#39;+safeHtml(iso.cls)+&#39;&lt;/span&gt;&lt;/button&gt;&#39;;
+    });
+    isoHtml=&#39;&lt;div class=&#34;iso-panel&#34;&gt;&lt;div class=&#34;iso-header&#34;&gt;⚠ &#39;+r.allIsomers.length
+      +&#39; positional/structural isomers share formula &#39;+safeHtml(r.formula)+&#39; — select your compound:&lt;/div&gt;&#39;
+      +&#39;&lt;div class=&#34;iso-grid&#34;&gt;&#39;+cards+&#39;&lt;/div&gt;&lt;/div&gt;&#39;;
+  }
+
+  /* Atom pills */
+  var atomPills=&#39;&#39;;for(var el in r.atoms)atomPills+=&#39;&lt;span class=&#34;atom-pill&#34;&gt;&lt;b&gt;&#39;+el+&#39;&lt;/b&gt;=&#39;+r.atoms[el]+&#39;&lt;/span&gt;&#39;;
+
+  /* FG pills */
+  var fgPills=&#39;&#39;;r.functionalGroups.forEach(function(fg){fgPills+=&#39;&lt;span class=&#34;fg-pill&#34;&gt;&#39;+safeHtml(fg)+&#39;&lt;/span&gt;&#39;;});
+
+  /* Reactions */
+  var rxnHtml=&#39;&#39;;var rxns=selectedIso?(REACTIONS_DB[selectedIso.hill]||r.reactions):r.reactions;
+  if(rxns.length)rxns.forEach(function(rx){rxnHtml+=&#39;&lt;div class=&#34;rxn-item&#34;&gt;&#39;+safeHtml(rx)+&#39;&lt;/div&gt;&#39;;});
+  else rxnHtml=&#39;&lt;div style=&#34;font-size:.77rem;color:#64748b&#34;&gt;No specific reactions indexed for this formula.&lt;/div&gt;&#39;;
+
+  /* Isomers list accordion */
+  var isoListHtml=&#39;&#39;;
+  if(r.allIsomers.length===0){isoListHtml=&#39;&lt;div style=&#34;color:#64748b;font-size:.8rem&#34;&gt;No isomers indexed.&lt;/div&gt;&#39;;}
+  else{r.allIsomers.forEach(function(iso,i){
+    var isAct=selectedIso?selectedIso.name===iso.name:(!selectedIso&amp;&amp;i===0);
+    isoListHtml+=&#39;&lt;div style=&#34;padding:8px;border-radius:10px;margin-bottom:6px;background:&#39;+(isAct?&#39;rgba(0,255,136,.06)&#39;:&#39;rgba(0,0,0,.2)&#39;)+&#39;;border:1px solid &#39;+(isAct?&#39;rgba(0,255,136,.25)&#39;:&#39;rgba(255,255,255,.05)&#39;)+&#39;\&#34;&gt;&#39;
+      +&#39;&lt;div style=&#34;font-weight:600;font-size:.8rem;color:#e2e8f0&#34;&gt;&#39;+safeHtml(iso.name)+&#39;&lt;/div&gt;&#39;
+      +&#39;&lt;div style=&#34;font-size:.72rem;color:#00f2ff;font-family:monospace&#34;&gt;&#39;+safeHtml(iso.iupac)+&#39;&lt;/div&gt;&#39;
+      +&#39;&lt;div style=&#34;font-size:.7rem;color:#475569;font-family:monospace&#34;&gt;&#39;+safeHtml(iso.struct)+&#39;&lt;/div&gt;&#39;
+      +&#39;&lt;span style=&#34;display:inline-block;margin-top:4px;font-size:.62rem;background:#1e293b;color:#a855f7;padding:2px 8px;border-radius:50px&#34;&gt;&#39;+safeHtml(iso.cls)+&#39;&lt;/span&gt;&lt;/div&gt;&#39;;
+  });}
+
+  out.innerHTML=&#39;&lt;div class=&#34;result&#34;&gt;&#39;
+    +&#39;&lt;div class=&#34;res-head&#34;&gt;&#39;
+    +&#39;&lt;div&gt;&lt;div class=&#34;res-name&#34;&gt;&#39;+safeHtml(main.name)+&#39;&lt;/div&gt;&#39;
+    +(main.iupac&amp;&amp;main.iupac!==main.name?&#39;&lt;div class=&#34;res-iupac&#34;&gt;&#39;+safeHtml(main.iupac)+&#39;&lt;/div&gt;&#39;:&#39;&#39;)
+    +&#39;&lt;div class=&#34;res-class&#34;&gt;&#39;+safeHtml(main.cls)+&#39;&lt;/div&gt;&lt;/div&gt;&#39;
+    +&#39;&lt;span class=&#34;conf-badge &#39;+confCls+&#39;&#34;&gt;&#39;+confLbl+&#39;&lt;/span&gt;&lt;/div&gt;&#39;
+
+    +&#39;&lt;div class=&#34;info-grid-4&#34;&gt;&#39;
+    +&#39;&lt;div class=&#34;info-box&#34;&gt;&lt;div class=&#34;info-lbl&#34;&gt;Molecular Formula&lt;/div&gt;&lt;div class=&#34;info-val&#34;&gt;&#39;+safeHtml(r.formula)+&#39;&lt;/div&gt;&lt;/div&gt;&#39;
+    +&#39;&lt;div class=&#34;info-box&#34;&gt;&lt;div class=&#34;info-lbl&#34;&gt;Structural Formula&lt;/div&gt;&lt;div class=&#34;info-val sm&#34;&gt;&#39;+safeHtml(main.struct)+&#39;&lt;/div&gt;&lt;/div&gt;&#39;
+    +&#39;&lt;div class=&#34;info-box&#34;&gt;&lt;div class=&#34;info-lbl&#34;&gt;IUPAC Name&lt;/div&gt;&lt;div class=&#34;info-val sm&#34;&gt;&#39;+safeHtml(main.iupac||&#39;—&#39;)+&#39;&lt;/div&gt;&lt;/div&gt;&#39;
+    +&#39;&lt;div class=&#34;info-box&#34;&gt;&lt;div class=&#34;info-lbl&#34;&gt;MW (g/mol)&lt;/div&gt;&lt;div class=&#34;info-val&#34;&gt;&#39;+r.mw+&#39;&lt;/div&gt;&lt;/div&gt;&#39;
+    +&#39;&lt;/div&gt;&#39;
+
+    +&#39;&lt;div class=&#34;info-grid&#34;&gt;&#39;
+    +&#39;&lt;div class=&#34;info-box&#34;&gt;&lt;div class=&#34;info-lbl&#34;&gt;DBE&lt;/div&gt;&lt;div class=&#34;info-val accent&#34;&gt;&#39;+r.dbe+&#39;&lt;/div&gt;&lt;/div&gt;&#39;
+    +&#39;&lt;div class=&#34;info-box&#34;&gt;&lt;div class=&#34;info-lbl&#34;&gt;Aromatic?&lt;/div&gt;&lt;div class=&#34;info-val&#34;&gt;&#39;+( r.aromatic?&#39;Yes ⬡&#39;:&#39;No&#39;)+&#39;&lt;/div&gt;&lt;/div&gt;&#39;
+    +&#39;&lt;/div&gt;&#39;
+
+    +&#39;&lt;div class=&#34;pills&#34; style=&#34;margin-bottom:10px&#34;&gt;&#39;+atomPills+&#39;&lt;/div&gt;&#39;
+    +(fgPills?&#39;&lt;div class=&#34;pills&#34;&gt;&#39;+fgPills+&#39;&lt;/div&gt;&#39;:&#39;&#39;)
+    +isoHtml
+
+    +&#39;&lt;hr&gt;&#39;
+    +makeAccordion(&#39;M1 — Formula Parser&#39;,
+      dataRow(&#39;Input&#39;,r.original)+dataRow(&#39;Type&#39;,r.inputType)+dataRow(&#39;Hill formula&#39;,r.formula)
+      +dataRow(&#39;Atoms&#39;,Object.keys(r.atoms).map(function(k){return k+&#39;=&#39;+r.atoms[k];}).join(&#39; | &#39;)),true)
+    +makeAccordion(&#39;M2 — DBE &amp; Molecular Formula Class&#39;,
+      dataRow(&#39;DBE formula&#39;,r.dbeShow)+dataRow(&#39;DBE value&#39;,r.dbe)+dataRow(&#39;Interpretation&#39;,dbeLabel)
+      +dataRow(&#39;C/H/O&#39;,( r.atoms.C||0)+&#39;/&#39;+(r.atoms.H||0)+&#39;/&#39;+(r.atoms.O||0)))
+    +makeAccordion(&#39;M3 — Aromaticity Detector&#39;,
+      dataRow(&#39;Aromatic?&#39;,r.aromatic?&#39;Yes&#39;:&#39;No&#39;)+r.aromaticDetails.map(function(d,i){return dataRow(&#39;Detail &#39;+(i+1),d);}).join(&#39;&#39;))
+    +makeAccordion(&#39;M4 — Functional Groups&#39;,
+      dataRow(&#39;Groups&#39;,r.functionalGroups.join(&#39;, &#39;)||&#39;—&#39;)+r.fgNotes.map(function(n,i){return dataRow(&#39;Note &#39;+(i+1),n);}).join(&#39;&#39;))
+    +makeAccordion(&#39;M5+M6 — All Structural Isomers&#39;,&#39;&lt;div&gt;&#39;+isoListHtml+&#39;&lt;/div&gt;&#39;)
+    +makeAccordion(&#39;M7 — Known Reactions&#39;,&#39;&lt;div&gt;&#39;+rxnHtml+&#39;&lt;/div&gt;&#39;)
+
+    +&#39;&lt;button class=&#34;try-btn&#34; onclick=&#34;tryAnother()&#34;&gt;Resolved: &#39;+safeHtml(main.name)+&#39; — Try Another&lt;/button&gt;&#39;
+    +&#39;&lt;/div&gt;&#39;;
+}
+
+function pickIso(idx){
+  if(!currentResult)return;
+  selectedIso=currentResult.allIsomers[idx];
+  renderResult();
+}
+
+function tryAnother(){
+  document.getElementById(&#39;main-input&#39;).value=&#39;&#39;;
+  document.getElementById(&#39;rfr-out&#39;).style.display=&#39;none&#39;;
+  document.getElementById(&#39;rfr-idle&#39;).style.display=&#39;block&#39;;
+  currentResult=null;selectedIso=null;
+  document.getElementById(&#39;main-input&#39;).focus();
+}
+
+/* Enter key */
+document.getElementById(&#39;main-input&#39;).addEventListener(&#39;keydown&#39;,function(e){if(e.key===&#39;Enter&#39;)doResolve();});
+    </script>
+    <script src="https://replit-cdn.com/replit-pill/replit-pill.global.js" data-repl-id="43778203-d1e8-427a-84f7-b59dbfdbf791">
+    </script>
+  </body>
+</html>

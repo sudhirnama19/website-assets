@@ -1,0 +1,200 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>XLSB Master Merger</title>
+
+<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+
+<style>
+
+body{
+font-family:Segoe UI;
+background:#0a0a0a;
+color:#e0e0e0;
+display:flex;
+justify-content:center;
+padding-top:60px
+}
+
+.container{
+background:#1a1a1a;
+padding:40px;
+border-radius:20px;
+box-shadow:0 0 30px rgba(0,255,150,0.2);
+width:650px;
+border:1px solid #333
+}
+
+h2{
+color:#00ff96;
+margin-top:0;
+text-transform:uppercase;
+letter-spacing:2px
+}
+
+.upload-zone{
+border:2px dashed #00ff96;
+padding:40px;
+border-radius:15px;
+cursor:pointer;
+background:rgba(0,255,150,.03);
+margin-bottom:20px
+}
+
+.upload-zone:hover{
+background:rgba(0,255,150,.1)
+}
+
+#console{
+background:#000;
+color:#00ff96;
+padding:15px;
+border-radius:8px;
+font-family:consolas;
+font-size:13px;
+height:200px;
+overflow-y:auto;
+border:1px solid #222;
+margin-bottom:20px
+}
+
+.btn{
+background:#00ff96;
+color:#000;
+border:none;
+padding:15px;
+border-radius:8px;
+font-weight:bold;
+cursor:pointer;
+width:100%;
+font-size:1.1em;
+display:none
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>XLSB Master Merger</h2>
+<p>Merge XLSB datasets and rebuild IDs</p>
+
+<div class="upload-zone" onclick="document.getElementById('filePicker').click()">
+<b>Select XLSB Files</b>
+<p style="font-size:12px;color:#888">Select all dataset parts together</p>
+
+<input type="file" id="filePicker" multiple accept=".xlsb,.xlsx,.xls" style="display:none">
+</div>
+
+<div id="console">System Ready...</div>
+
+<button id="mergeBtn" class="btn">GENERATE MASTER FILE</button>
+
+</div>
+
+<script>
+
+const filePicker = document.getElementById("filePicker")
+const logBox = document.getElementById("console")
+const mergeBtn = document.getElementById("mergeBtn")
+
+let loadedData=[]
+
+function log(msg){
+
+logBox.innerHTML += "<div>["+new Date().toLocaleTimeString()+"] "+msg+"</div>"
+logBox.scrollTop = logBox.scrollHeight
+
+}
+
+filePicker.onchange = async function(e){
+
+const files = Array.from(e.target.files)
+
+if(files.length==0)return
+
+files.sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}))
+
+loadedData=[]
+logBox.innerHTML=""
+
+log("Loading "+files.length+" files...")
+
+for(let i=0;i<files.length;i++){
+
+const file = files[i]
+
+try{
+
+log("Reading "+file.name)
+
+const buffer = await file.arrayBuffer()
+
+const wb = XLSX.read(buffer,{type:"array"})
+
+const sheet = wb.Sheets[wb.SheetNames[0]]
+
+let rows = XLSX.utils.sheet_to_json(sheet,{header:1})
+
+if(i>0)rows.shift()
+
+loadedData.push(...rows)
+
+log("Added "+rows.length+" rows")
+
+}catch(err){
+
+log("ERROR: "+err.message)
+
+}
+
+}
+
+log("TOTAL ROWS: "+(loadedData.length-1))
+
+mergeBtn.style.display="block"
+
+}
+
+mergeBtn.onclick=function(){
+
+mergeBtn.disabled=true
+
+log("Rebuilding IDs...")
+
+const processed = loadedData.map((row,i)=>{
+
+if(i==0)return row
+
+row[0]=i
+
+return row
+
+})
+
+log("Building master file...")
+
+const wb = XLSX.utils.book_new()
+
+const ws = XLSX.utils.aoa_to_sheet(processed)
+
+XLSX.utils.book_append_sheet(wb,ws,"Master_Database")
+
+log("Downloading...")
+
+XLSX.writeFile(wb,"MASTER_DATASET.xlsb",{bookType:"xlsb",compression:true})
+
+log("SUCCESS!")
+
+mergeBtn.disabled=false
+
+}
+
+</script>
+
+</body>
+</html>

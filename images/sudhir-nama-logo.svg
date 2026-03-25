@@ -17,9 +17,9 @@
   <!-- Text with outline + glow -->
   <g filter="url(#glow)">
     <!-- Outer dark stroke -->
-    <text x="50%" y="55%" text-anchor="middle"
+    <text x="100%" y="100%" text-anchor="middle"
           font-family="Georgia, 'Times New Roman', serif"
-          font-size="180"
+          font-size="250"
           font-weight="bold"
           fill="none"
           stroke="#0a0a0a"
@@ -28,9 +28,9 @@
     </text>
 
     <!-- Inner stroke -->
-    <text x="50%" y="55%" text-anchor="middle"
+    <text x="100%" y="100%" text-anchor="middle"
           font-family="Georgia, 'Times New Roman', serif"
-          font-size="180"
+          font-size="250"
           font-weight="bold"
           fill="none"
           stroke="#1a3f3c"
@@ -39,9 +39,9 @@
     </text>
 
     <!-- Main fill -->
-    <text x="50%" y="55%" text-anchor="middle"
+    <text x="100%" y="100%" text-anchor="middle"
           font-family="Georgia, 'Times New Roman', serif"
-          font-size="180"
+          font-size="250"
           font-weight="bold"
           fill="#4fa39a">
       SUDHIR'S

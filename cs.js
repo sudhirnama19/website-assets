@@ -1,1 +1,116 @@
-(function(){var _0x196714=(function(){var _0x11c5c3=!![];return function(_0x524545,_0x5b5203){var _0x3a06f9=_0x11c5c3?function(){if(_0x5b5203){var _0x2d5e80=_0x5b5203['apply'](_0x524545,arguments);return _0x5b5203=null,_0x2d5e80;}}:function(){};return _0x11c5c3=![],_0x3a06f9;};}()),_0x3315aa=(function(){var _0x4c9fb3=!![];return function(_0x114bb0,_0x327474){var _0x1c20de=_0x4c9fb3?function(){if(_0x327474){var _0x1aad52=_0x327474['apply'](_0x114bb0,arguments);return _0x327474=null,_0x1aad52;}}:function(){};return _0x4c9fb3=![],_0x1c20de;};}()),_0x5ec038=['sudhirnama.in','www.sudhirnama.in','sudhirnama.blogspot.com'],_0x409c10='Unauthorized\x20Theme\x20|\x20Chemistry\x20Spark',_0x4f50de=location['hostname'],_0x6d82b4=location['href'],_0x539864=document['referrer']||'',_0x560c1c=_0x4f50de==='draft.blogger.com'||_0x539864['includes']('draft.blogger.com')||_0x6d82b4['includes']('/preview')||_0x6d82b4['includes']('/edit')||_0x539864['includes']('blogger.com');if(_0x560c1c)return;var _0x7e9188=_0x5ec038['some'](function(_0x14bbb3){return _0x4f50de===_0x14bbb3;});if(_0x7e9188)return;function _0x2f6444(){var _0x472b25=document['createElement']('div');_0x472b25['innerText']=_0x409c10,_0x472b25['style']['cssText']=['position:fixed','bottom:10px','left:10px','z-index:2147483647','background:rgba(0,0,0,0.85)','color:#fff','padding:8px\x2014px','font-size:13px','border-radius:6px','font-family:sans-serif','pointer-events:none']['join'](';'),document['body']['appendChild'](_0x472b25);}function _0x3a11ba(){var _0x3d1554=document['createElement']('style');_0x3d1554['innerHTML']=['body{filter:blur(1.5px)\x20grayscale(0.4)!important;}','img,\x20svg{opacity:0.6!important;}','h1,h2,h3{letter-spacing:2px!important;color:#999!important;}','.post,\x20.post-body,\x20section{margin:-5px!important;}','.post-body{pointer-events:none!important;user-select:none!important;}']['join'](''),document['head']['appendChild'](_0x3d1554);}function _0x3238b3(){document['addEventListener']('click',function(_0x284f2f){_0x284f2f['preventDefault'](),_0x284f2f['stopPropagation']();},!![]);}function _0xd24d7e(){['generatePostPDF','autoInternalLink','initPremiumWidget']['forEach'](function(_0x1862a3){typeof window[_0x1862a3]==='function'&&(window[_0x1862a3]=function(){return![];});});}function _0x30e5eb(){var _0x36d36d=_0x196714(this,function(){return _0x36d36d['toString']()['search']('(((.+)+)+)+$')['toString']()['constructor'](_0x36d36d)['search']('(((.+)+)+)+$');});_0x36d36d();var _0x482650=_0x3315aa(this,function(){var _0x192160;try{var _0x5e8cf6=Function('return\x20(function()\x20'+'{}.constructor(\x22return\x20this\x22)(\x20)'+');');_0x192160=_0x5e8cf6();}catch(_0x49a80c){_0x192160=window;}var _0x1598e0=_0x192160['console']=_0x192160['console']||{},_0x3c6d19=['log','warn','info','error','exception','table','trace'];for(var _0x59bb7d=0x0;_0x59bb7d<_0x3c6d19['length'];_0x59bb7d++){var _0xcc3daf=_0x3315aa['constructor']['prototype']['bind'](_0x3315aa),_0xfdf4dc=_0x3c6d19[_0x59bb7d],_0x1f5e77=_0x1598e0[_0xfdf4dc]||_0xcc3daf;_0xcc3daf['__proto__']=_0x3315aa['bind'](_0x3315aa),_0xcc3daf['toString']=_0x1f5e77['toString']['bind'](_0x1f5e77),_0x1598e0[_0xfdf4dc]=_0xcc3daf;}});_0x482650(),_0x2f6444(),_0x3a11ba(),_0x3238b3(),_0xd24d7e();}document['readyState']==='loading'?document['addEventListener']('DOMContentLoaded',_0x30e5eb):_0x30e5eb();}());
+(function () {
+
+  // === CONFIG ===
+  var ALLOWED = [
+    "sudhirnama.in",
+    "www.sudhirnama.in",
+    "sudhirnama.blogspot.com"
+  ];
+
+  var BRAND = "Unauthorized Theme | Chemistry Spark";
+
+  var host = location.hostname;
+  var href = location.href;
+  var ref  = document.referrer || "";
+
+  // ===============================
+  // ✅ BLOGGER ENV DETECTION (FINAL FIX)
+  // ===============================
+  var isBloggerEnv =
+    host === "draft.blogger.com" ||
+
+    // ⭐ CRITICAL: preview iframe domain
+    host.includes("bloggerusercontent.com") ||
+
+    // fallback checks
+    ref.includes("draft.blogger.com") ||
+    ref.includes("blogger.com") ||
+    href.includes("/preview") ||
+    href.includes("/edit") ||
+
+    // DOM-level detection (extra safety)
+    document.querySelector('[data-blogger-version]');
+
+  if (isBloggerEnv) return;
+
+  // ===============================
+  // ✅ DOMAIN WHITELIST
+  // ===============================
+  var valid = ALLOWED.some(function (d) {
+    return host === d;
+  });
+
+  if (valid) return;
+
+  // ===============================
+  // 🚨 UNAUTHORIZED MODE (MEDIUM)
+  // ===============================
+
+  function showWatermark() {
+    var wm = document.createElement("div");
+    wm.innerText = BRAND;
+
+    wm.style.cssText = [
+      "position:fixed",
+      "bottom:10px",
+      "left:10px",
+      "z-index:2147483647",
+      "background:rgba(0,0,0,0.85)",
+      "color:#fff",
+      "padding:8px 14px",
+      "font-size:13px",
+      "border-radius:6px",
+      "font-family:sans-serif",
+      "pointer-events:none"
+    ].join(";");
+
+    document.body.appendChild(wm);
+  }
+
+  function breakStyles() {
+    var s = document.createElement("style");
+
+    s.innerHTML = [
+      "body{filter:blur(1.5px) grayscale(0.4)!important;}",
+      "img, svg{opacity:0.6!important;}",
+      "h1,h2,h3{letter-spacing:2px!important;color:#999!important;}",
+      ".post, .post-body, section{margin:-5px!important;}",
+      ".post-body{pointer-events:none!important;user-select:none!important;}"
+    ].join("");
+
+    document.head.appendChild(s);
+  }
+
+  function freezeClicks() {
+    document.addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }, true);
+  }
+
+  function killFunctions() {
+    [
+      "generatePostPDF",
+      "autoInternalLink",
+      "initPremiumWidget"
+    ].forEach(function (fn) {
+      if (typeof window[fn] === "function") {
+        window[fn] = function () { return false; };
+      }
+    });
+  }
+
+  function run(){
+    showWatermark();
+    breakStyles();
+    freezeClicks();
+    killFunctions();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", run);
+  } else {
+    run();
+  }
+
+})();

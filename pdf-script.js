@@ -1811,3 +1811,26 @@ async function generatePostPDF() {
   btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right:8px;"><path d="M7 18H17V16H7V18Z" fill="#FF0000"/><path d="M17 14H7V12H17V14Z" fill="#FF0000"/><path d="M7 10H11V8H7V10Z" fill="#FF0000"/><path fill-rule="evenodd" clip-rule="evenodd" d="M6 2C4.34315 2 3 3.34315 3 5V19C3 20.6569 4.34315 22 6 22H18C19.6569 22 21 20.6569 21 19V9L14 2H6ZM13 4L19 10H13V4ZM5 19V5C5 4.44772 5.44772 4 6 4H11V12H19V19C19 19.5523 18.5523 20 18 20H6C5.44772 20 5 19.5523 5 19Z" fill="#FF0000"/></svg>Download As PDF';
   btn.disabled = false;
 }
+window.addEventListener('load', function() {
+  const meta = document.querySelector('.post-date')
+    || document.querySelector('.post-meta-top')
+    || document.querySelector('.post-meta');
+  if (meta && !document.getElementById('pdf-btn-final')) {
+    meta.style.display = 'flex';
+    meta.style.justifyContent = 'space-between';
+    meta.style.alignItems = 'center';
+    meta.style.width = '100%';
+    const btn = document.createElement('button');
+    btn.id = 'pdf-btn-final';
+    btn.innerHTML = 'Download As PDF';
+    btn.onclick = generatePostPDF;
+    Object.assign(btn.style, {
+      background: '#ffffff', color: '#333333', border: '1px solid #dddddd',
+      padding: '7px 15px', borderRadius: '6px', fontSize: '13px',
+      fontWeight: '600', cursor: 'pointer', display: 'inline-flex',
+      alignItems: 'center', whiteSpace: 'nowrap', marginLeft: 'auto',
+      boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+    });
+    meta.appendChild(btn);
+  }
+});

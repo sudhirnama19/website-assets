@@ -116,7 +116,6 @@ function loadUnicodeFont(pdf) {
 
 
 async function generatePostPDF() {
-if(!window[['_0x','4f','9d'].join('')] || !window[['_0x','4f','9d'].join('')][['Ch','em','i','str','y','Sp','ark'].join('')]) return;
   const btn = document.getElementById('pdf-btn-final');
   const postBody = document.querySelector('.post-body');
   const postTitle = document.querySelector('.post-title')
